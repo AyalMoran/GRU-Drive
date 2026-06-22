@@ -1,0 +1,11 @@
+docs/
+.cache/
+build/
+.agents/
+.codex    
+debug/
+.clangd
+
+demo/src-payload/
+demo/dst-payload/
+demo/storage/
