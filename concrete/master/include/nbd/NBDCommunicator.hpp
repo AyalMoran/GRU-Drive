@@ -8,6 +8,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -98,6 +99,7 @@ class NBDCommunicator
     int m_nbdFd;
     pid_t m_childPid;
     bool m_ownsIoFd;
+    std::mutex m_replyMutex;
 };
 
 } // namespace ilrd::concrete

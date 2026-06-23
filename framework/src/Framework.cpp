@@ -12,6 +12,7 @@
 #include <unistd.h>     // pipe
 
 #include "AsyncInjection.hpp" // AsyncInjection
+#include "DebugLogger.hpp"    // ILRD_DEBUG_LOG
 #include "DllLoader.hpp"      // DllLoader
 #include "DirMonitor.hpp"     // DirMonitor
 #include "Factory.hpp"        // Factory
@@ -178,8 +179,10 @@ Framework::Framework(const ProxyMap& input_proxy_map,
     {
         std::filesystem::create_directories(m_pluginsFolderPathName);
         m_pluginMonitor = new DirMonitor(m_pluginsFolderPathName);
-        m_pluginMonitor->SubscribeAdded(
-            [this](const std::string& path_name) { TryLoadPlugin(path_name); });
+        const DirMonitor::Callback load_plugin =
+            [this](const std::string& path_name) { TryLoadPlugin(path_name); };
+        m_pluginMonitor->SubscribeAdded(load_plugin);
+        m_pluginMonitor->SubscribeModified(load_plugin);
     }
 }
 
@@ -290,7 +293,22 @@ void Framework::TryLoadPlugin(const std::string& path_name)
         return;
     }
 
-    m_pluginLoader->LoadSharedObject(path_name);
+    try
+    {
+        m_pluginLoader->LoadSharedObject(path_name);
+    }
+    catch (const std::exception& error)
+    {
+        ILRD_DEBUG_LOG_LEVEL("Framework skipped plugin " + path_name + ": " +
+                                 error.what(),
+                             Logger::Level::WARNING);
+    }
+    catch (...)
+    {
+        ILRD_DEBUG_LOG_LEVEL("Framework skipped plugin " + path_name +
+                                 ": unknown error",
+                             Logger::Level::WARNING);
+    }
 }
 
 bool Framework::IsSharedObjectPath(const std::string& path_name)

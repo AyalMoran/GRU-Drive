@@ -2,6 +2,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
 
@@ -149,21 +150,33 @@ int NBDCommunicator::GetFd() const
 bool NBDCommunicator::ReceiveRequest(Request& out)
 {
     nbd_request request = {};
-    const ssize_t bytes_read = read(m_ioFd, &request, sizeof(request));
-    if (0 == bytes_read)
+    char* header = reinterpret_cast<char*>(&request);
+    std::size_t bytes_read = 0;
+    while (0 == bytes_read)
     {
-        return false;
+        const ssize_t rc = read(m_ioFd, header, sizeof(request));
+        if (rc < 0)
+        {
+            if (EINTR == errno)
+            {
+                continue;
+            }
+
+            throw std::system_error(errno, std::generic_category(),
+                                    "NBD request read failed");
+        }
+
+        if (0 == rc)
+        {
+            return false;
+        }
+
+        bytes_read = static_cast<std::size_t>(rc);
     }
 
-    if (bytes_read < 0)
+    if (bytes_read < sizeof(request))
     {
-        throw std::system_error(errno, std::generic_category(),
-                                "NBD request read failed");
-    }
-
-    if (bytes_read != static_cast<ssize_t>(sizeof(request)))
-    {
-        throw std::runtime_error("NBD short request header");
+        ReadAll(m_ioFd, header + bytes_read, sizeof(request) - bytes_read);
     }
 
     if (ntohl(request.magic) != NBD_REQUEST_MAGIC)
@@ -195,6 +208,8 @@ void NBDCommunicator::SendReply(
     int error_code,
     const std::vector<std::uint8_t>& payload)
 {
+    std::lock_guard<std::mutex> lock(m_replyMutex);
+
     nbd_reply reply = {};
     reply.magic = htonl(NBD_REPLY_MAGIC);
     reply.error = htonl(static_cast<std::uint32_t>(error_code));

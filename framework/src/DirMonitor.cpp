@@ -249,7 +249,22 @@ struct DirMonitor::Impl
                  snapshot.begin();
              it != snapshot.end(); ++it)
         {
-            (*it)(full_path);
+            try
+            {
+                (*it)(full_path);
+            }
+            catch (const std::exception& error)
+            {
+                ILRD_DEBUG_LOG_LEVEL("DirMonitor callback failed for " +
+                                         full_path + ": " + error.what(),
+                                     Logger::Level::WARNING);
+            }
+            catch (...)
+            {
+                ILRD_DEBUG_LOG_LEVEL("DirMonitor callback failed for " +
+                                         full_path + ": unknown error",
+                                     Logger::Level::WARNING);
+            }
         }
     }
 

@@ -72,6 +72,8 @@ class RAIDManager
     RAIDManager(MasterMetadata& metadata, Config config);
     explicit RAIDManager(IMinionProxy& single_minion_proxy);
     RAIDManager(IMinionProxy& single_minion_proxy, Config config);
+    RAIDManager(const RAIDManager&) = delete;
+    RAIDManager& operator=(const RAIDManager&) = delete;
 
     IMinionProxy& ResolveReadTarget(std::uint64_t logical_offset,
                                     std::uint32_t length);
@@ -106,10 +108,9 @@ class RAIDManager
                                        std::uint32_t length) const;
     void ValidateLogicalRange(std::uint64_t logical_offset,
                               std::uint32_t length) const;
-    static MasterMetadata& CreateSingleMinionMetadata(
-        IMinionProxy& single_minion_proxy);
     static UUID& SingleMinionNodeId();
 
+    MasterMetadata m_singleMinionMetadata;
     MasterMetadata& m_metadata;
     Config m_config;
 };

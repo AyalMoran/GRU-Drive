@@ -354,6 +354,26 @@ void TestRAIDManagerSingleMinionFallback()
     END_SUITE(suite);
 }
 
+void TestRAIDManagerCompatibilityMetadataIsInstanceLocal()
+{
+    INIT_SUITE(suite, "RAIDManager Compatibility Metadata Is Instance Local");
+    BEGIN_SUITE(suite);
+
+    MockMinionProxy first_proxy;
+    MockMinionProxy second_proxy;
+
+    RAIDManager first_manager(first_proxy, RAIDManager::Config{1024});
+    ASSERT_TRUE(suite, &first_manager.ResolveReadTarget(0, 1) == &first_proxy);
+
+    RAIDManager second_manager(second_proxy, RAIDManager::Config{1024});
+
+    ASSERT_TRUE(suite, &first_manager.ResolveReadTarget(0, 1) == &first_proxy);
+    ASSERT_TRUE(suite, &second_manager.ResolveReadTarget(0, 1) == &second_proxy);
+
+    PRINT_SUITE_SUMMARY(suite);
+    END_SUITE(suite);
+}
+
 void TestRAIDManagerKeepsInactiveTargetsForDegradedPolicy()
 {
     INIT_SUITE(suite, "RAIDManager Inactive Targets For Degraded Policy");
@@ -451,6 +471,49 @@ void TestRAIDManagerCapacityAndCompatibilityBoundaries()
     END_SUITE(suite);
 }
 
+void TestRAIDManagerRejectsSubStripeCapacity()
+{
+    INIT_SUITE(suite, "RAIDManager Rejects Sub-Stripe Capacity");
+    BEGIN_SUITE(suite);
+
+    MockMinionProxy single_proxy;
+    MasterMetadata single_metadata;
+    single_metadata.RegisterNode(UUID(60, 0, 0, 0), single_proxy, 1023);
+    RAIDManager single_manager(single_metadata, RAIDManager::Config{1024});
+
+    bool single_threw = false;
+    try
+    {
+        single_manager.GetExposedCapacity();
+    }
+    catch (const std::invalid_argument&)
+    {
+        single_threw = true;
+    }
+
+    MockMinionProxy mirror_proxies[2];
+    MasterMetadata mirror_metadata;
+    mirror_metadata.RegisterNode(UUID(61, 0, 0, 0), mirror_proxies[0], 2047);
+    mirror_metadata.RegisterNode(UUID(62, 0, 0, 0), mirror_proxies[1], 2047);
+    RAIDManager mirror_manager(mirror_metadata, RAIDManager::Config{1024});
+
+    bool mirror_threw = false;
+    try
+    {
+        mirror_manager.GetExposedCapacity();
+    }
+    catch (const std::invalid_argument&)
+    {
+        mirror_threw = true;
+    }
+
+    ASSERT_TRUE(suite, single_threw);
+    ASSERT_TRUE(suite, mirror_threw);
+
+    PRINT_SUITE_SUMMARY(suite);
+    END_SUITE(suite);
+}
+
 } // namespace
 
 int main()
@@ -466,8 +529,10 @@ int main()
     TestRAIDManagerSupportsOddNodeNextMirror();
     TestRAIDManagerLocalOffsetsAndSplitting();
     TestRAIDManagerSingleMinionFallback();
+    TestRAIDManagerCompatibilityMetadataIsInstanceLocal();
     TestRAIDManagerKeepsInactiveTargetsForDegradedPolicy();
     TestRAIDManagerCapacityAndCompatibilityBoundaries();
+    TestRAIDManagerRejectsSubStripeCapacity();
 
     PRINT_SUMMARY();
     return 0;

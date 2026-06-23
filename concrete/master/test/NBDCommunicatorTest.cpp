@@ -1,7 +1,10 @@
 #include <array>
 #include <cerrno>
+#include <chrono>
 #include <cstring>
+#include <exception>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 #include <arpa/inet.h>
@@ -123,6 +126,51 @@ void TestReadRequestDecode()
     END_SUITE(suite);
 }
 
+void TestFragmentedReadRequestHeader()
+{
+    INIT_SUITE(suite, "NBDCommunicator Fragmented Header Read");
+    BEGIN_SUITE(suite);
+
+    SocketPair pair;
+    NBDCommunicator communicator(pair.First());
+    nbd_request raw = MakeRawRequest(NBD_CMD_READ, 8192, 1024);
+
+    NBDCommunicator::Request request;
+    std::exception_ptr failure;
+    bool received = false;
+    std::thread reader(
+        [&]()
+        {
+            try
+            {
+                received = communicator.ReceiveRequest(request);
+            }
+            catch (...)
+            {
+                failure = std::current_exception();
+            }
+        });
+
+    const std::size_t first_chunk = 7;
+    WriteAll(pair.Second(), &raw, first_chunk);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    WriteAll(pair.Second(),
+             reinterpret_cast<char*>(&raw) + first_chunk,
+             sizeof(raw) - first_chunk);
+
+    reader.join();
+
+    ASSERT_TRUE(suite, nullptr == failure);
+    ASSERT_TRUE(suite, received);
+    ASSERT_EQ(suite, static_cast<int>(NBDCommunicator::RequestType::READ),
+              static_cast<int>(request.type));
+    ASSERT_EQ(suite, 8192ULL, request.offset);
+    ASSERT_EQ(suite, 1024u, request.length);
+
+    PRINT_SUITE_SUMMARY(suite);
+    END_SUITE(suite);
+}
+
 void TestWriteRequestDecode()
 {
     INIT_SUITE(suite, "NBDCommunicator Write Decode");
@@ -230,6 +278,7 @@ int main()
     PRINT_TEST_HEADER("NBDCommunicator");
 
     TestReadRequestDecode();
+    TestFragmentedReadRequestHeader();
     TestWriteRequestDecode();
     TestFlushRequestDecode();
     TestSendReply();

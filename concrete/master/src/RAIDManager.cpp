@@ -24,6 +24,14 @@ std::uint64_t AlignDown(std::uint64_t value, std::uint64_t alignment)
     return value - (value % alignment);
 }
 
+void ValidateConfig(const RAIDManager::Config& config)
+{
+    if (0 == config.stripe_size)
+    {
+        throw std::invalid_argument("RAIDManager stripe size must be nonzero");
+    }
+}
+
 } // namespace
 
 RAIDManager::RAIDManager(MasterMetadata& metadata)
@@ -32,12 +40,9 @@ RAIDManager::RAIDManager(MasterMetadata& metadata)
 }
 
 RAIDManager::RAIDManager(MasterMetadata& metadata, Config config)
-    : m_metadata(metadata), m_config(config)
+    : m_singleMinionMetadata(), m_metadata(metadata), m_config(config)
 {
-    if (0 == m_config.stripe_size)
-    {
-        throw std::invalid_argument("RAIDManager stripe size must be nonzero");
-    }
+    ValidateConfig(m_config);
 
     ILRD_DEBUG_LOG("RAIDManager constructed with stripe_size=" +
                    std::to_string(m_config.stripe_size));
@@ -49,8 +54,17 @@ RAIDManager::RAIDManager(IMinionProxy& single_minion_proxy)
 }
 
 RAIDManager::RAIDManager(IMinionProxy& single_minion_proxy, Config config)
-    : RAIDManager(CreateSingleMinionMetadata(single_minion_proxy), config)
+    : m_singleMinionMetadata(),
+      m_metadata(m_singleMinionMetadata),
+      m_config(config)
 {
+    ValidateConfig(m_config);
+    m_singleMinionMetadata.RegisterNode(SingleMinionNodeId(),
+                                        single_minion_proxy,
+                                        std::numeric_limits<std::uint64_t>::max());
+
+    ILRD_DEBUG_LOG("RAIDManager constructed with single minion stripe_size=" +
+                   std::to_string(m_config.stripe_size));
 }
 
 IMinionProxy& RAIDManager::ResolveReadTarget(std::uint64_t logical_offset,
@@ -149,6 +163,12 @@ std::uint64_t RAIDManager::GetExposedCapacity() const
         {
             minimum = usable_capacity;
         }
+    }
+
+    if (0 == minimum)
+    {
+        throw std::invalid_argument(
+            "RAIDManager minion capacity must provide at least one full stripe");
     }
 
     if (m_metadata.NodeCount() >
@@ -325,15 +345,6 @@ void RAIDManager::ValidateLogicalRange(std::uint64_t logical_offset,
     {
         throw std::out_of_range("RAIDManager operation exceeds capacity");
     }
-}
-
-MasterMetadata& RAIDManager::CreateSingleMinionMetadata(
-    IMinionProxy& single_minion_proxy)
-{
-    static MasterMetadata metadata;
-    metadata.RegisterNode(SingleMinionNodeId(), single_minion_proxy,
-                          static_cast<std::uint64_t>(-1));
-    return metadata;
 }
 
 UUID& RAIDManager::SingleMinionNodeId()
