@@ -1,0 +1,13 @@
+{
+  "estimatedTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheCreationTokens": 0,
+  "crossings": {},
+  "firstSeenAt": "2026-08-19T10:53:51.827Z",
+  "updatedAt": "2026-08-19T10:54:15.930Z",
+  "lastToolName": "Read",
+  "kindCounts": {
+    "unknown": 11
+  },
+  "imageResponses": 0
+}

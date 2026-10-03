@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="en" data-theme="luxury">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GRU-Drive - Engineering Status Report (2026-09-08)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex) > * { min-width: 0; }
+  :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .label, summary) { overflow-wrap: anywhere; }
+  :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+  html { background: var(--color-base-100); color: var(--color-base-content); scroll-behavior: smooth; }
+  body { margin: 0; }
+  code.k { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: color-mix(in oklab, var(--color-base-content) 10%, transparent); padding: 0.05em 0.35em; border-radius: 0.3rem; }
+  .fig { width: 100%; height: auto; display: block; font-family: ui-sans-serif, system-ui, sans-serif; }
+  .fig text { fill: var(--color-base-content); font-size: 13px; }
+  .fig .lbl { font-size: 11px; opacity: 0.75; }
+  .fig .ttl { font-size: 14px; font-weight: 600; }
+  .fig .box { fill: var(--color-base-200); stroke: var(--color-base-content); stroke-opacity: 0.35; stroke-width: 1; }
+  .fig .box-p { fill: color-mix(in oklab, var(--color-primary) 22%, var(--color-base-200)); stroke: var(--color-primary); stroke-width: 1.2; }
+  .fig .box-s { fill: color-mix(in oklab, var(--color-secondary) 22%, var(--color-base-200)); stroke: var(--color-secondary); stroke-width: 1.2; }
+  .fig .box-a { fill: color-mix(in oklab, var(--color-accent) 22%, var(--color-base-200)); stroke: var(--color-accent); stroke-width: 1.2; }
+  .fig .box-e { fill: color-mix(in oklab, var(--color-error) 22%, var(--color-base-200)); stroke: var(--color-error); stroke-width: 1.4; }
+  .fig .box-w { fill: color-mix(in oklab, var(--color-warning) 22%, var(--color-base-200)); stroke: var(--color-warning); stroke-width: 1.2; }
+  .fig .box-ok { fill: color-mix(in oklab, var(--color-success) 22%, var(--color-base-200)); stroke: var(--color-success); stroke-width: 1.2; }
+  .fig .region { fill: color-mix(in oklab, var(--color-base-content) 5%, transparent); stroke: var(--color-base-content); stroke-opacity: 0.2; stroke-dasharray: 4 3; }
+  .fig .edge { stroke: var(--color-base-content); stroke-opacity: 0.7; stroke-width: 1.4; fill: none; marker-end: url(#arr); }
+  .fig .edge-e { stroke: var(--color-error); stroke-width: 1.8; fill: none; marker-end: url(#arrE); }
+  .fig .edge-d { stroke: var(--color-base-content); stroke-opacity: 0.5; stroke-width: 1.2; stroke-dasharray: 5 4; fill: none; marker-end: url(#arr); }
+  .fig .lane { stroke: var(--color-base-content); stroke-opacity: 0.25; stroke-dasharray: 3 4; }
+  .fig .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+  .diffwrap { border: 1px solid color-mix(in oklab, var(--color-base-content) 15%, transparent); border-radius: 0.75rem; overflow: hidden; }
+  .diffwrap pre.fallback { margin: 0; padding: 1rem; font-size: 12px; overflow-x: auto; background: var(--color-base-200); }
+  .sev-P1 { --sev: var(--color-error); }
+  .sev-P2 { --sev: var(--color-warning); }
+  .sev-P3 { --sev: var(--color-info); }
+  .sev-fixed { --sev: var(--color-success); }
+  .issue { border-left: 4px solid var(--sev); }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .num { font-variant-numeric: tabular-nums; }
+  @media print { .no-print { display: none !important; } }
+</style>
+</head>
+<body class="bg-base-100 text-base-content">
+
+<!-- ============================================================ -->
+<!-- HEADER                                                       -->
+<!-- ============================================================ -->
+<header class="border-b border-base-content/10 bg-base-200/60">
+  <div class="mx-auto max-w-7xl px-6 py-10 lg:px-10">
+    <div class="flex flex-wrap items-start justify-between gap-6">
+      <div class="max-w-3xl">
+        <p class="text-xs uppercase tracking-[0.2em] opacity-60">Engineering status report</p>
+        <h1 class="mt-2 text-4xl font-bold leading-tight lg:text-5xl">GRU-Drive: where it stands, what is broken, what to do next</h1>
+        <p class="mt-4 text-base opacity-80">
+          A private network drive that turns machines you already own (a Raspberry Pi, an old laptop) into a mounted Linux folder.
+          The master speaks Network Block Device (NBD) to the kernel and fans each 4 KiB stripe out over UDP to a RAID10-style ring of minions.
+        </p>
+        <p class="mt-3 text-sm opacity-70">
+          Sources: <span class="font-mono">docs/reviews/project-review-2026-07-03.md</span>, <span class="font-mono">project-review-2026-06-22.md</span>, <span class="font-mono">docs/known-issues.md</span>, <span class="font-mono">docs/architecture/roadmap.md</span>, <span class="font-mono">docs/current/step-order.txt</span>, README, and the code at HEAD <span class="font-mono">13689e3</span> plus the uncommitted working tree as of 2026-09-08.
+        </p>
+      </div>
+      <div class="stats stats-vertical shadow sm:stats-horizontal">
+        <div class="stat">
+          <div class="stat-title">Open P1</div>
+          <div class="stat-value text-error num">2</div>
+          <div class="stat-desc">data loss / consistency</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">Open P2</div>
+          <div class="stat-value text-warning num">12</div>
+          <div class="stat-desc">timing, shutdown, trust</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">Open P3</div>
+          <div class="stat-value text-info num">16</div>
+          <div class="stat-desc">latent / hygiene</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">Milestones</div>
+          <div class="stat-value num">14<span class="text-lg opacity-60">/19</span></div>
+          <div class="stat-desc">done, per step-order.txt</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The verdict -->
+    <div role="alert" class="alert alert-error alert-soft mt-8 items-start">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/></svg>
+      <div>
+        <h3 class="font-bold">The one-paragraph verdict</h3>
+        <p class="text-sm">
+          The architecture is sound and the last review's four P1 crashes are genuinely fixed.
+          But the RAID10 write path can still acknowledge a write to the kernel before the mirror copy is ever sent (N1), overlapping writes can land in any order (F4), and the failover machinery is unreachable because nothing ever marks a node down (N2).
+          The roadmap says "persistent metadata next". This report recommends fixing those three first, because persisting placement and out-of-sync state is not worth much while the state it persists is wrong.
+        </p>
+      </div>
+    </div>
+
+    <!-- Top 3 actions -->
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+      <a href="#N1" class="card card-border bg-base-100 transition hover:border-error">
+        <div class="card-body p-5">
+          <div class="flex items-center gap-2"><span class="badge badge-error badge-sm">P1</span><span class="text-xs opacity-60">Do first</span></div>
+          <h3 class="card-title text-base">Register all children before any can complete</h3>
+          <p class="text-sm opacity-80">A mirrored write acks the kernel after replica 1 replies, then throws on replica 2. Silent partial write. One-day fix in <span class="font-mono">MasterRuntime</span>.</p>
+        </div>
+      </a>
+      <a href="#F4" class="card card-border bg-base-100 transition hover:border-error">
+        <div class="card-body p-5">
+          <div class="flex items-center gap-2"><span class="badge badge-error badge-sm">P1</span><span class="text-xs opacity-60">Do second</span></div>
+          <h3 class="card-title text-base">Add a range-ordering seam plus a write epoch</h3>
+          <p class="text-sm opacity-80">Two overlapping writes race through the pool, UDP, and the minion pool. A retransmit can resurrect old data. Introduce <span class="font-mono">RangeSequencer</span>.</p>
+        </div>
+      </a>
+      <a href="#N2" class="card card-border bg-base-100 transition hover:border-warning">
+        <div class="card-body p-5">
+          <div class="flex items-center gap-2"><span class="badge badge-warning badge-sm">P2</span><span class="text-xs opacity-60">Do third</span></div>
+          <h3 class="card-title text-base">Wire heartbeat-driven liveness</h3>
+          <p class="text-sm opacity-80">Read failover and degraded writes exist but every <span class="font-mono">active</span> flag is permanently true. A dead minion still takes the whole device down.</p>
+        </div>
+      </a>
+    </div>
+
+    <nav class="toc mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      <a href="#arch" class="link link-hover">1. Architecture review</a>
+      <a href="#bugs" class="link link-hover">2. Bug catalog</a>
+      <a href="#roadmap" class="link link-hover">3. Roadmap and next steps</a>
+      <a href="#opts" class="link link-hover">4. Proposed optimizations</a>
+      <a href="#tests" class="link link-hover">5. Test gaps</a>
+      <a href="#checklist" class="link link-hover">6. Action checklist</a>
+    </nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-6 py-10 lg:px-10">
+
+<!-- ============================================================ -->
+<!-- 1. ARCHITECTURE                                              -->
+<!-- ============================================================ -->
+<section id="arch" class="scroll-mt-6">
+  <h2 class="text-3xl font-bold">1. Architecture review</h2>
+  <p class="mt-2 max-w-3xl opacity-80">What the system is, how a request moves through it, and where the design is strong or thin. Diagrams first, evidence below each.</p>
+
+  <!-- 1.1 Topology -->
+  <div class="card card-border mt-8 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">1.1 What does the user see, and what actually runs?</h3>
+      <p class="text-sm opacity-80">The user gets a normal mounted folder. Below it, Linux owns filesystem semantics and GRU-Drive owns only offsets, byte ranges, placement, and replication. That line was drawn deliberately.</p>
+      <svg class="fig mt-4" viewBox="0 0 960 330" role="img" aria-labelledby="t1">
+        <title id="t1">System topology: mount, filesystem, NBD device, master, UDP, ring of minions</title>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" opacity="0.7"/></marker>
+          <marker id="arrE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--color-error)"/></marker>
+        </defs>
+        <!-- left column: user side -->
+        <rect class="region" x="20" y="20" width="270" height="290" rx="10"/>
+        <text x="35" y="42" class="ttl">Linux owns this</text>
+        <g id="n-mount"><title>mount /mnt/drive</title><rect class="box" x="60" y="60" width="190" height="42" rx="8"/><text x="155" y="86" text-anchor="middle">mount /mnt/drive</text></g>
+        <g id="n-fs"><title>ext2 / ext4 in kernel</title><rect class="box" x="60" y="125" width="190" height="42" rx="8"/><text x="155" y="151" text-anchor="middle">ext4 (kernel)</text></g>
+        <g id="n-nbd"><title>/dev/nbd0 kernel NBD device</title><rect class="box" x="60" y="190" width="190" height="42" rx="8"/><text x="155" y="216" text-anchor="middle" class="mono">/dev/nbd0 (kernel NBD)</text></g>
+        <path class="edge" d="M155 102V123"/><path class="edge" d="M155 167V188"/>
+        <text x="155" y="265" text-anchor="middle" class="lbl">files, dirs, permissions</text>
+        <text x="155" y="282" text-anchor="middle" class="lbl">become raw block reads/writes</text>
+
+        <!-- middle: master -->
+        <rect class="region" x="320" y="20" width="290" height="290" rx="10"/>
+        <text x="335" y="42" class="ttl">GRU-Drive owns this</text>
+        <g id="n-master"><title>master_nbd process</title><rect class="box-p" x="350" y="60" width="230" height="130" rx="10"/>
+          <text x="465" y="84" text-anchor="middle" class="ttl">master_nbd</text>
+          <text x="465" y="106" text-anchor="middle" class="lbl">NBDCommunicator: socketpair + ioctl</text>
+          <text x="465" y="124" text-anchor="middle" class="lbl">RAIDManager: stripe + mirror placement</text>
+          <text x="465" y="142" text-anchor="middle" class="lbl">MasterRuntime: fan-out, aggregate, retry</text>
+          <text x="465" y="160" text-anchor="middle" class="lbl">ResponseManager: match reply by UUID</text>
+          <text x="465" y="178" text-anchor="middle" class="lbl">needs root for NBD ioctls</text>
+        </g>
+        <path class="edge" d="M250 211H348" /><text x="300" y="203" text-anchor="middle" class="lbl">socketpair</text>
+        <text x="465" y="225" text-anchor="middle" class="lbl">4 KiB stripes, 64-byte header,</text>
+        <text x="465" y="242" text-anchor="middle" class="lbl">magic ILRD + version + UUID</text>
+        <text x="465" y="275" text-anchor="middle" class="lbl">No auth on the wire (F10).</text>
+        <text x="465" y="292" text-anchor="middle" class="lbl">Static membership from argv.</text>
+
+        <!-- right: minions -->
+        <rect class="region" x="640" y="20" width="300" height="290" rx="10"/>
+        <text x="655" y="42" class="ttl">Storage nodes (unprivileged)</text>
+        <g id="n-m0"><title>minion 0</title><rect class="box-s" x="670" y="62" width="240" height="46" rx="8"/><text x="690" y="82">minion 0</text><text x="690" y="99" class="lbl mono">backing file (fixed size)</text></g>
+        <g id="n-m1"><title>minion 1</title><rect class="box-s" x="670" y="126" width="240" height="46" rx="8"/><text x="690" y="146">minion 1</text><text x="690" y="163" class="lbl mono">backing file, ARM32 build ok</text></g>
+        <g id="n-m2"><title>minion 2</title><rect class="box-s" x="670" y="190" width="240" height="46" rx="8"/><text x="690" y="210">minion 2</text><text x="690" y="227" class="lbl mono">READ WRITE FLUSH HEARTBEAT</text></g>
+        <path class="edge" d="M580 100 C 620 100, 630 85, 668 85"/>
+        <path class="edge" d="M580 125 C 620 125, 630 149, 668 149"/>
+        <path class="edge" d="M580 150 C 620 150, 630 213, 668 213"/>
+        <text x="625" y="70" text-anchor="middle" class="lbl">UDP</text>
+        <!-- ring -->
+        <path class="edge-d" d="M915 85 C 940 100, 940 130, 915 149"/>
+        <path class="edge-d" d="M915 149 C 940 165, 940 195, 915 213"/>
+        <text x="790" y="270" text-anchor="middle" class="lbl">each stripe is mirrored onto the next node in the ring</text>
+        <text x="790" y="288" text-anchor="middle" class="lbl">(minion 2 mirrors back onto minion 0)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 1.2 Layers -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">1.2 How is the code layered?</h3>
+      <p class="text-sm opacity-80">Master and minion share nothing except the wire protocol. Both are thin concrete layers over a generic reactor-plus-thread-pool framework that knows nothing about storage. This is the project's best structural decision, and also the seam through which most of the P2 lifetime bugs leak.</p>
+      <svg class="fig mt-4" viewBox="0 0 960 400" role="img" aria-labelledby="t2">
+        <title id="t2">Code layers: framework at the bottom, concrete common, master, and minion above it</title>
+        <!-- framework -->
+        <rect class="region" x="20" y="250" width="920" height="130" rx="10"/>
+        <text x="35" y="272" class="ttl">framework/  (generic, no storage knowledge)</text>
+        <g><title>Reactor</title><rect class="box-a" x="40" y="290" width="120" height="34" rx="6"/><text x="100" y="312" text-anchor="middle">Reactor</text></g>
+        <g><title>IInputProxy</title><rect class="box-a" x="172" y="290" width="120" height="34" rx="6"/><text x="232" y="312" text-anchor="middle">IInputProxy</text></g>
+        <g><title>InputMediator</title><rect class="box-a" x="304" y="290" width="130" height="34" rx="6"/><text x="369" y="312" text-anchor="middle">InputMediator</text></g>
+        <g><title>Factory: key to ICommand</title><rect class="box-a" x="446" y="290" width="120" height="34" rx="6"/><text x="506" y="312" text-anchor="middle">Factory</text></g>
+        <g><title>ThreadPool</title><rect class="box-a" x="578" y="290" width="120" height="34" rx="6"/><text x="638" y="312" text-anchor="middle">ThreadPool</text></g>
+        <g><title>AsyncInjection: self-rescheduling timer</title><rect class="box-a" x="710" y="290" width="130" height="34" rx="6"/><text x="775" y="312" text-anchor="middle">AsyncInjection</text></g>
+        <g><title>Scheduler</title><rect class="box-a" x="852" y="290" width="80" height="34" rx="6"/><text x="892" y="312" text-anchor="middle">Scheduler</text></g>
+        <g><title>DirMonitor + DllLoader: hot plugin loading</title><rect class="box-a" x="40" y="334" width="250" height="34" rx="6"/><text x="165" y="356" text-anchor="middle">DirMonitor + DllLoader (inotify, dlopen)</text></g>
+        <g><title>Roll-your-own containers</title><rect class="box" x="304" y="334" width="628" height="34" rx="6"/><text x="618" y="356" text-anchor="middle" class="lbl">SharedPtr, WaitableQueue, Singleton, Handleton, Logger, ScopeLock, PriorityQueue (learning-project primitives)</text></g>
+        <path class="edge" d="M160 307H170"/><path class="edge" d="M292 307H302"/><path class="edge" d="M434 307H444"/><path class="edge" d="M566 307H576"/><path class="edge" d="M698 307H708"/>
+
+        <!-- common -->
+        <rect class="region" x="20" y="170" width="920" height="66" rx="10"/>
+        <text x="35" y="192" class="ttl">concrete/common/  (shared wire contract)</text>
+        <g><title>MessageHeaderV1</title><rect class="box" x="290" y="200" width="150" height="28" rx="6"/><text x="365" y="219" text-anchor="middle" class="mono">MessageHeaderV1</text></g>
+        <g><title>UUID request id</title><rect class="box" x="452" y="200" width="90" height="28" rx="6"/><text x="497" y="219" text-anchor="middle" class="mono">UUID</text></g>
+        <g><title>Buffer serializer</title><rect class="box" x="554" y="200" width="120" height="28" rx="6"/><text x="614" y="219" text-anchor="middle" class="mono">Serializer</text></g>
+        <g><title>Concrete task types and factory</title><rect class="box" x="686" y="200" width="250" height="28" rx="6"/><text x="811" y="219" text-anchor="middle" class="mono">Read/Write/FlushTask + factory</text></g>
+
+        <!-- master -->
+        <rect class="region" x="20" y="20" width="560" height="136" rx="10"/>
+        <text x="35" y="42" class="ttl">concrete/master/</text>
+        <g><title>NBDCommunicator</title><rect class="box-p" x="40" y="55" width="150" height="30" rx="6"/><text x="115" y="75" text-anchor="middle" class="mono">NBDCommunicator</text></g>
+        <g><title>NBDProxy: IInputProxy for the NBD fd</title><rect class="box-p" x="200" y="55" width="110" height="30" rx="6"/><text x="255" y="75" text-anchor="middle" class="mono">NBDProxy</text></g>
+        <g><title>Master Read/Write/Flush commands</title><rect class="box-p" x="320" y="55" width="130" height="30" rx="6"/><text x="385" y="75" text-anchor="middle" class="mono">MasterCommands</text></g>
+        <g><title>MasterRuntime: fan-out, aggregation, retry policy</title><rect class="box-p" x="460" y="55" width="110" height="30" rx="6"/><text x="515" y="75" text-anchor="middle" class="mono">MasterRuntime</text></g>
+        <g><title>RAIDManager placement</title><rect class="box-p" x="40" y="95" width="120" height="30" rx="6"/><text x="100" y="115" text-anchor="middle" class="mono">RAIDManager</text></g>
+        <g><title>MasterMetadata node registry</title><rect class="box-p" x="170" y="95" width="130" height="30" rx="6"/><text x="235" y="115" text-anchor="middle" class="mono">MasterMetadata</text></g>
+        <g><title>MinionProxy: sends UDP requests</title><rect class="box-p" x="310" y="95" width="110" height="30" rx="6"/><text x="365" y="115" text-anchor="middle" class="mono">MinionProxy</text></g>
+        <g><title>MinionResponseProxy + ResponseManager</title><rect class="box-p" x="430" y="95" width="140" height="30" rx="6"/><text x="500" y="115" text-anchor="middle" class="mono">ResponseManager</text></g>
+        <text x="300" y="145" text-anchor="middle" class="lbl">MinionResponseProxy feeds ResponseManager from the reactor thread</text>
+
+        <!-- minion -->
+        <rect class="region" x="600" y="20" width="340" height="136" rx="10"/>
+        <text x="615" y="42" class="ttl">concrete/minion/</text>
+        <g><title>MasterProxy: receives requests, sends responses</title><rect class="box-s" x="620" y="55" width="140" height="30" rx="6"/><text x="690" y="75" text-anchor="middle" class="mono">MasterProxy</text></g>
+        <g><title>Minion commands</title><rect class="box-s" x="770" y="55" width="150" height="30" rx="6"/><text x="845" y="75" text-anchor="middle" class="mono">MinionCommands</text></g>
+        <g><title>MinionRuntime</title><rect class="box-s" x="620" y="95" width="140" height="30" rx="6"/><text x="690" y="115" text-anchor="middle" class="mono">MinionRuntime</text></g>
+        <g><title>MinionStorageBackend: pread/pwrite on a fixed file</title><rect class="box-s" x="770" y="95" width="150" height="30" rx="6"/><text x="845" y="115" text-anchor="middle" class="mono">StorageBackend</text></g>
+        <text x="770" y="145" text-anchor="middle" class="lbl">same framework skeleton, different commands</text>
+      </svg>
+      <div class="mt-3 grid gap-3 text-sm md:grid-cols-2">
+        <div class="rounded-box bg-base-100 p-4">
+          <p class="font-semibold">Why it matters</p>
+          <p class="opacity-80">Commands are looked up by integer key derived straight from <span class="font-mono">wire::MessageType</span>, so there is no second protocol vocabulary. Plugins can replace a command at runtime via inotify + dlopen without a restart.</p>
+        </div>
+        <div class="rounded-box bg-base-100 p-4">
+          <p class="font-semibold">Where it leaks</p>
+          <p class="opacity-80">The factory takes no-argument creators (<span class="font-mono">ICommand* (*)()</span>), so commands cannot receive their runtime. Every master command calls <span class="font-mono">GetActiveMasterRuntime()</span>, a file-static pointer with no mutex (F8).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1.3 Write path -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">1.3 What happens to one 4 KiB write?</h3>
+      <p class="text-sm opacity-80">The kernel emits one write per block. The master resolves it to a primary and a mirror, sends two datagrams, waits for two replies, and only then acks the kernel. Three threads are involved on the master: the reactor thread, a pool worker, and (for retries) a timer thread.</p>
+      <svg class="fig mt-4" viewBox="0 0 960 420" role="img" aria-labelledby="t3">
+        <title id="t3">Data flow for one mirrored write, across kernel, master reactor thread, master pool worker, UDP, and two minions</title>
+        <!-- lanes -->
+        <text x="80" y="28" text-anchor="middle" class="ttl">Kernel</text>
+        <text x="270" y="28" text-anchor="middle" class="ttl">Master: reactor thread</text>
+        <text x="500" y="28" text-anchor="middle" class="ttl">Master: pool worker</text>
+        <text x="740" y="28" text-anchor="middle" class="ttl">Minions (UDP)</text>
+        <line class="lane" x1="80" y1="40" x2="80" y2="400"/>
+        <line class="lane" x1="270" y1="40" x2="270" y2="400"/>
+        <line class="lane" x1="500" y1="40" x2="500" y2="400"/>
+        <line class="lane" x1="740" y1="40" x2="740" y2="400"/>
+
+        <g><title>1. kernel nbd_request WRITE offset length payload</title><rect class="box" x="20" y="55" width="120" height="40" rx="6"/><text x="80" y="72" text-anchor="middle" class="lbl">1. nbd_request</text><text x="80" y="88" text-anchor="middle" class="mono">WRITE off,len</text></g>
+        <path class="edge" d="M140 75H188"/>
+        <g><title>2. NBDCommunicator ReadAll header + payload; NBDProxy GetTask mints UUID, stores pending entry</title><rect class="box-p" x="190" y="55" width="160" height="40" rx="6"/><text x="270" y="72" text-anchor="middle" class="lbl">2. NBDProxy::GetTask</text><text x="270" y="88" text-anchor="middle" class="mono">mint UUID, pending[id]</text></g>
+        <path class="edge" d="M350 75H418"/>
+        <g><title>3. FrameworkTask on ThreadPool at MED priority</title><rect class="box-p" x="420" y="55" width="160" height="40" rx="6"/><text x="500" y="72" text-anchor="middle" class="lbl">3. MasterWriteCommand</text><text x="500" y="88" text-anchor="middle" class="mono">on ThreadPool</text></g>
+        <g><title>4. RAIDManager resolves offset to primary and mirror segment</title><rect class="box-p" x="420" y="115" width="160" height="40" rx="6"/><text x="500" y="132" text-anchor="middle" class="lbl">4. RAIDManager</text><text x="500" y="148" text-anchor="middle" class="mono">off -> M0 (+ mirror M1)</text></g>
+        <path class="edge" d="M500 95V113"/>
+        <g><title>5. RegisterChildRequest twice, sendto twice</title><rect class="box-w" x="420" y="175" width="160" height="40" rx="6"/><text x="500" y="192" text-anchor="middle" class="lbl">5. register child, send</text><text x="500" y="208" text-anchor="middle" class="mono">x2, one at a time (N1)</text></g>
+        <path class="edge" d="M500 155V173"/>
+        <g><title>6. UDP WRITE_REQ to primary</title><rect class="box-s" x="660" y="160" width="160" height="34" rx="6"/><text x="740" y="182" text-anchor="middle" class="mono">M0: pwrite, WRITE_RESP</text></g>
+        <g><title>6. UDP WRITE_REQ to mirror</title><rect class="box-s" x="660" y="204" width="160" height="34" rx="6"/><text x="740" y="226" text-anchor="middle" class="mono">M1: pwrite, WRITE_RESP</text></g>
+        <path class="edge" d="M580 188H658"/><path class="edge" d="M580 205 L658 221"/>
+        <g><title>7. Return PostTaskParams: retry every 100 ms up to 10 times via AsyncInjection</title><rect class="box" x="420" y="330" width="160" height="40" rx="6"/><text x="500" y="347" text-anchor="middle" class="lbl">7. return retry params</text><text x="500" y="363" text-anchor="middle" class="mono">AsyncInjection 100ms x10</text></g>
+        <path class="edge" d="M500 215V328"/>
+
+        <g><title>8. MinionResponseProxy on the reactor thread decodes the datagram and calls ResponseManager::HandleResponse</title><rect class="box-p" x="190" y="240" width="160" height="40" rx="6"/><text x="270" y="257" text-anchor="middle" class="lbl">8. MinionResponseProxy</text><text x="270" y="273" text-anchor="middle" class="mono">ResponseManager match</text></g>
+        <path class="edge" d="M660 177 C 600 177, 420 260, 352 260"/>
+        <path class="edge" d="M660 221 C 600 221, 420 270, 352 270"/>
+        <g><title>9. MasterRuntime HandleChildCompletion; when child set is empty, CompleteRequestIfReady</title><rect class="box-p" x="190" y="300" width="160" height="40" rx="6"/><text x="270" y="317" text-anchor="middle" class="lbl">9. HandleChildCompletion</text><text x="270" y="333" text-anchor="middle" class="mono">set empty? complete</text></g>
+        <path class="edge" d="M270 280V298"/>
+        <g><title>10. NBDProxy SendReply under m_replyMutex</title><rect class="box-p" x="190" y="360" width="160" height="40" rx="6"/><text x="270" y="377" text-anchor="middle" class="lbl">10. NBDProxy::SendReply</text><text x="270" y="393" text-anchor="middle" class="mono">m_replyMutex (F3 fixed)</text></g>
+        <path class="edge" d="M270 340V358"/>
+        <g><title>11. kernel sees the write acknowledged</title><rect class="box-ok" x="20" y="360" width="120" height="40" rx="6"/><text x="80" y="377" text-anchor="middle" class="lbl">11. nbd_reply</text><text x="80" y="393" text-anchor="middle" class="mono">OK / DEGRADED</text></g>
+        <path class="edge" d="M188 380H142"/>
+      </svg>
+      <p class="mt-3 text-sm opacity-80">Step 5 is where N1 lives: children are registered and sent one at a time, and step 9 completes the parent as soon as the child set is empty. Step 3 onwards is where F4 lives: nothing orders two overlapping requests. Both are detailed in the bug catalog.</p>
+    </div>
+  </div>
+
+  <!-- 1.4 RAID10 -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">1.4 Where does each block live?</h3>
+      <p class="text-sm opacity-80">RAID10 as a ring. The logical device is cut into 4 KiB stripes, striped across primaries, and every stripe is also written to the next node. Exposed capacity is the minimum node capacity times node count divided by two.</p>
+      <svg class="fig mt-4" viewBox="0 0 960 250" role="img" aria-labelledby="t4">
+        <title id="t4">RAID10 ring placement for four blocks across four minions</title>
+        <text x="20" y="30" class="ttl">Logical device (what the kernel sees)</text>
+        <g><title>block 0, offset 0</title><rect class="box" x="20" y="45" width="100" height="36" rx="6"/><text x="70" y="68" text-anchor="middle" class="mono">blk0 @0</text></g>
+        <g><title>block 1, offset 4096</title><rect class="box" x="130" y="45" width="100" height="36" rx="6"/><text x="180" y="68" text-anchor="middle" class="mono">blk1 @4096</text></g>
+        <g><title>block 2, offset 8192</title><rect class="box" x="240" y="45" width="100" height="36" rx="6"/><text x="290" y="68" text-anchor="middle" class="mono">blk2 @8192</text></g>
+        <g><title>block 3, offset 12288</title><rect class="box" x="350" y="45" width="100" height="36" rx="6"/><text x="400" y="68" text-anchor="middle" class="mono">blk3 @12288</text></g>
+        <text x="20" y="120" class="ttl">Physical placement (primary solid, mirror dashed)</text>
+        <g><title>M0 holds blk0 primary and blk3 mirror</title><rect class="box-s" x="20" y="135" width="200" height="90" rx="8"/><text x="120" y="156" text-anchor="middle">M0</text><rect class="box-p" x="35" y="166" width="80" height="26" rx="5"/><text x="75" y="184" text-anchor="middle" class="mono">blk0</text><rect class="box" x="125" y="166" width="80" height="26" rx="5" stroke-dasharray="4 3"/><text x="165" y="184" text-anchor="middle" class="mono">blk3'</text><text x="120" y="215" text-anchor="middle" class="lbl">local offset = stripe index</text></g>
+        <g><title>M1 holds blk1 primary and blk0 mirror</title><rect class="box-s" x="260" y="135" width="200" height="90" rx="8"/><text x="360" y="156" text-anchor="middle">M1</text><rect class="box-p" x="275" y="166" width="80" height="26" rx="5"/><text x="315" y="184" text-anchor="middle" class="mono">blk1</text><rect class="box" x="365" y="166" width="80" height="26" rx="5" stroke-dasharray="4 3"/><text x="405" y="184" text-anchor="middle" class="mono">blk0'</text></g>
+        <g><title>M2 holds blk2 primary and blk1 mirror</title><rect class="box-s" x="500" y="135" width="200" height="90" rx="8"/><text x="600" y="156" text-anchor="middle">M2</text><rect class="box-p" x="515" y="166" width="80" height="26" rx="5"/><text x="555" y="184" text-anchor="middle" class="mono">blk2</text><rect class="box" x="605" y="166" width="80" height="26" rx="5" stroke-dasharray="4 3"/><text x="645" y="184" text-anchor="middle" class="mono">blk1'</text></g>
+        <g><title>M3 holds blk3 primary and blk2 mirror</title><rect class="box-s" x="740" y="135" width="200" height="90" rx="8"/><text x="840" y="156" text-anchor="middle">M3</text><rect class="box-p" x="755" y="166" width="80" height="26" rx="5"/><text x="795" y="184" text-anchor="middle" class="mono">blk3</text><rect class="box" x="845" y="166" width="80" height="26" rx="5" stroke-dasharray="4 3"/><text x="885" y="184" text-anchor="middle" class="mono">blk2'</text></g>
+        <path class="edge" d="M70 81 C 70 110, 75 120, 75 164"/>
+        <path class="edge" d="M180 81 C 180 110, 315 120, 315 164"/>
+        <path class="edge" d="M290 81 C 290 110, 555 120, 555 164"/>
+        <path class="edge" d="M400 81 C 400 110, 795 120, 795 164"/>
+        <text x="480" y="40" class="lbl">Reads go to the primary; only an inactive</text>
+        <text x="480" y="56" class="lbl">primary is served from its mirror.</text>
+        <text x="480" y="76" class="lbl">Nothing marks a node inactive today (N2),</text>
+        <text x="480" y="92" class="lbl">so a dead M1 makes blk1 unreadable even</text>
+        <text x="480" y="108" class="lbl">though blk1' sits on M2.</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 1.5 Strengths / weaknesses -->
+  <div class="mt-8 grid gap-6 lg:grid-cols-2">
+    <div>
+      <h3 class="text-xl font-semibold text-success">Strengths (keep these)</h3>
+      <ul class="mt-3 space-y-3">
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">The NBD boundary is the right cut.</p><p class="text-sm opacity-80">Linux owns files and directories, GRU-Drive owns offsets. That is why the whole master fits in a handful of classes. Verified in <span class="font-mono">concrete/master/src/NBDCommunicator.cpp</span>.</p></li>
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">Framework and concrete layers are genuinely separate.</p><p class="text-sm opacity-80">The framework has no storage vocabulary; command keys come from <span class="font-mono">wire::MessageType</span>. Master and minion reuse the same reactor, pool, and plugin loader.</p></li>
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">The wire protocol was versioned on day one.</p><p class="text-sm opacity-80">A fixed 64-byte header with magic, version, type, status, UUID, flags, offset and lengths. Validation of reserved fields and payload bounds is tested in <span class="font-mono">WireProtocolTest</span>.</p></li>
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">Retry is one small framework class.</p><p class="text-sm opacity-80"><span class="font-mono">AsyncInjection</span> reschedules itself every 100 ms and gives up after 10 rounds. Master commands just return <span class="font-mono">PostTaskParams</span>. Elegant, but see N8/N14 for the missing cancel handle.</p></li>
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">The June P1 crashes were fixed properly, not patched.</p><p class="text-sm opacity-80">Sub-stripe capacity now throws a clean error with a regression test; NBD header reads use <span class="font-mono">ReadAll</span>; replies hold <span class="font-mono">m_replyMutex</span> across header and payload; single-minion metadata is per instance. All re-verified by reading the code.</p></li>
+        <li class="rounded-box bg-base-200/50 p-4"><p class="font-semibold">Real concrete test coverage.</p><p class="text-sm opacity-80">15 test binaries under <span class="font-mono">make test</span>, including a smoke test that spawns a real minion process, all without root.</p></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-xl font-semibold text-error">Weak points (what the rest of this report is about)</h3>
+      <ul class="mt-3 space-y-3">
+        <li class="rounded-box border border-error/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-error badge-sm">P1</span><p class="font-semibold">No ordering seam anywhere.</p></div><p class="text-sm opacity-80">Two overlapping writes go through a multi-worker pool, then UDP, then a second multi-worker pool on the minion, with no per-range lock at any of the five hops. <a href="#F4" class="link">F4</a></p></li>
+        <li class="rounded-box border border-error/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-error badge-sm">P1</span><p class="font-semibold">Completion predicate is "child set empty", but children are added one at a time.</p></div><p class="text-sm opacity-80">A fast reply to child 1 completes the parent before child 2 is registered. <a href="#N1" class="link">N1</a></p></li>
+        <li class="rounded-box border border-warning/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-warning badge-sm">P2</span><p class="font-semibold">Degraded mode is implemented but unreachable.</p></div><p class="text-sm opacity-80"><span class="font-mono">SetNodeActive</span> and <span class="font-mono">SendHeartbeatRequest</span> have zero non-test callers. Confirmed by grep on 2026-09-08. <a href="#N2" class="link">N2</a></p></li>
+        <li class="rounded-box border border-warning/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-warning badge-sm">P2</span><p class="font-semibold">Shutdown is a cluster of ordering races.</p></div><p class="text-sm opacity-80">Runtime is cleared before the pool stops (F8), plugins are unloaded before the pool drains (N3), retries capture a stack runtime by reference (N8), the Scheduler timer can fire after atexit destroys it (N9), and the signal handler locks a mutex (F12).</p></li>
+        <li class="rounded-box border border-warning/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-warning badge-sm">P2</span><p class="font-semibold">Framework tests never run.</p></div><p class="text-sm opacity-80"><span class="font-mono">make test</span> loops only 15 concrete binaries. The 13 framework test programs are not in any target. Commit 13689e3 changed <span class="font-mono">DirMonitor</span> with zero automated coverage. <a href="#F7" class="link">F7</a></p></li>
+        <li class="rounded-box border border-warning/40 bg-base-200/50 p-4"><div class="flex items-center gap-2"><span class="badge badge-warning badge-sm">P2</span><p class="font-semibold">Nothing on the wire is authenticated.</p></div><p class="text-sm opacity-80">The minion answers any datagram and caches its source as the master's reply address. UUIDs are counter + time + pid + IP, so they are guessable. Fine for a trusted LAN demo, not for the stated home/IoT direction. <a href="#F10" class="link">F10</a></p></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 1.6 Scoreboard -->
+  <div class="mt-8">
+    <h3 class="text-xl font-semibold">1.5 What changed between the two reviews?</h3>
+    <p class="mt-1 text-sm opacity-80">Commit 13689e3 landed one day after the June review. Four P1s closed outright, two partially. Everything else is still open. Statuses below were re-verified against the working tree today, not copied from the July document.</p>
+    <div class="mt-3 overflow-x-auto rounded-box border border-base-content/10 bg-base-100">
+      <table class="table table-sm table-zebra">
+        <thead><tr><th>ID</th><th>Finding</th><th>June</th><th>Now</th><th>Residual</th></tr></thead>
+        <tbody>
+          <tr><td class="font-mono">F1</td><td>RAID exposed-capacity divide by zero</td><td><span class="badge badge-error badge-sm">P1</span></td><td><span class="badge badge-success badge-sm">Fixed</span></td><td class="text-xs">Demo script computes default size without stripe alignment (P3)</td></tr>
+          <tr><td class="font-mono">F2</td><td>NBD header short read</td><td><span class="badge badge-error badge-sm">P1</span></td><td><span class="badge badge-success badge-sm">Fixed</span></td><td class="text-xs">ReadAll blocks reactor with no timeout; payload length uncapped (P2)</td></tr>
+          <tr><td class="font-mono">F3</td><td>NBD reply byte interleave</td><td><span class="badge badge-error badge-sm">P1</span></td><td><span class="badge badge-success badge-sm">Fixed</span></td><td class="text-xs">No concurrency test; no poison flag on partial write (P3)</td></tr>
+          <tr><td class="font-mono">F4</td><td>Overlapping request ordering</td><td><span class="badge badge-error badge-sm">P1</span></td><td><span class="badge badge-error badge-sm">P1 open</span></td><td class="text-xs">Unchanged</td></tr>
+          <tr><td class="font-mono">F5</td><td>Plugin load crashes process</td><td><span class="badge badge-error badge-sm">P1</span></td><td><span class="badge badge-info badge-sm">P3 residual</span></td><td class="text-xs">Exceptions contained; still loads on IN_CREATE, partial .so can be pinned</td></tr>
+          <tr><td class="font-mono">F6</td><td>Single-minion shared static metadata</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-success badge-sm">Fixed</span></td><td class="text-xs">SingleMinionNodeId returns non-const static (P3)</td></tr>
+          <tr><td class="font-mono">F7</td><td>make test skips framework suite</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-warning badge-sm">P2 open</span></td><td class="text-xs">Verified: Makefile test target still loops CONCRETE_TEST_BINS only</td></tr>
+          <tr><td class="font-mono">F8</td><td>Process-global runtime pointers</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-warning badge-sm">P2 open</span></td><td class="text-xs">Plus a shutdown drop window found in July</td></tr>
+          <tr><td class="font-mono">F9</td><td>Trailing-byte decode asymmetry</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-info badge-sm">P3 open</span></td><td class="text-xs">Re-graded down</td></tr>
+          <tr><td class="font-mono">F10</td><td>No transport authenticity</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-warning badge-sm">P2 open</span></td><td class="text-xs">README now documents the trusted-network assumption</td></tr>
+          <tr><td class="font-mono">F11</td><td>Framework is copyable</td><td><span class="badge badge-warning badge-sm">P2</span></td><td><span class="badge badge-info badge-sm">P3 open</span></td><td class="text-xs">Re-graded down</td></tr>
+          <tr><td class="font-mono">F12</td><td>Signal handler not async-safe</td><td><span class="badge badge-info badge-sm">P3</span></td><td><span class="badge badge-warning badge-sm">P2 open</span></td><td class="text-xs">Re-graded up: self-deadlock path confirmed</td></tr>
+          <tr><td class="font-mono">F13</td><td>Artifacts in tree</td><td><span class="badge badge-info badge-sm">P3</span></td><td><span class="badge badge-info badge-sm">P3 residual</span></td><td class="text-xs">compile_commands.json is still tracked and points at an old path</td></tr>
+          <tr><td class="font-mono">F14</td><td>No root README</td><td><span class="badge badge-info badge-sm">P3</span></td><td><span class="badge badge-success badge-sm">Addressed</span></td><td class="text-xs">A full README exists in the working tree but is not committed yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. BUG CATALOG                                               -->
+<!-- ============================================================ -->
+<section id="bugs" class="mt-16 scroll-mt-6">
+  <h2 class="text-3xl font-bold">2. Bug catalog</h2>
+  <p class="mt-2 max-w-3xl opacity-80">Every open finding, ordered by severity. Each card says what goes wrong, gives a concrete scenario, and names the fix. Click a card's details for the test that would pin it.</p>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
+    <span class="badge badge-error">P1</span><span class="opacity-80">correctness or data-integrity risk on a normal path</span>
+    <span class="badge badge-warning">P2</span><span class="opacity-80">needs specific timing, config, or a long-running process</span>
+    <span class="badge badge-info">P3</span><span class="opacity-80">latent, hygiene, or documentation</span>
+  </div>
+
+  <!-- P1 -->
+  <h3 class="mt-8 text-xl font-semibold text-error">P1: fix before anything else</h3>
+
+  <article id="N1" class="issue sev-P1 card mt-4 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="badge badge-error">P1</span>
+        <span class="badge badge-ghost font-mono">N1</span>
+        <h4 class="text-lg font-semibold">A mirrored write can ack the kernel before its second replica is ever sent</h4>
+      </div>
+      <p class="text-sm opacity-90"><strong>What goes wrong.</strong> Children are registered and sent one at a time in a loop on a pool worker. Completion runs on the reactor thread and fires as soon as the child set is empty. If child 1's reply arrives while the worker is between iterations, the parent completes with one child, the kernel gets <span class="font-mono">OK</span>, and iteration 2 throws because the parent no longer exists.</p>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <div>
+          <p class="text-sm font-semibold">The code, as it is today</p>
+          <p class="text-xs opacity-70"><span class="font-mono">concrete/master/src/MasterCommands.cpp:280-303</span> and <span class="font-mono">MasterRuntime.cpp:287-307</span></p>
+          <div id="diff-n1-current" class="diffwrap mt-2"></div>
+        </div>
+        <div>
+          <p class="text-sm font-semibold">The interleaving that breaks it</p>
+          <svg class="fig mt-2" viewBox="0 0 480 300" role="img" aria-labelledby="t5">
+            <title id="t5">N1 race: pool worker sends child 1, reactor completes the parent, worker then fails to register child 2</title>
+            <text x="90" y="20" text-anchor="middle" class="ttl">Pool worker</text>
+            <text x="250" y="20" text-anchor="middle" class="ttl">Reactor thread</text>
+            <text x="410" y="20" text-anchor="middle" class="ttl">Minion M0</text>
+            <line class="lane" x1="90" y1="30" x2="90" y2="290"/><line class="lane" x1="250" y1="30" x2="250" y2="290"/><line class="lane" x1="410" y1="30" x2="410" y2="290"/>
+            <g><title>register child 1, sendto</title><rect class="box-p" x="20" y="45" width="140" height="34" rx="6"/><text x="90" y="62" text-anchor="middle" class="lbl">i=0: register c1</text><text x="90" y="75" text-anchor="middle" class="mono">sendto(c1)</text></g>
+            <path class="edge" d="M160 62H400"/>
+            <g><title>preempted</title><rect class="box-w" x="20" y="95" width="140" height="26" rx="6"/><text x="90" y="112" text-anchor="middle" class="lbl">preempted (load)</text></g>
+            <g><title>WRITE_RESP c1</title><rect class="box-s" x="350" y="95" width="120" height="26" rx="6"/><text x="410" y="112" text-anchor="middle" class="mono">WRITE_RESP c1</text></g>
+            <path class="edge" d="M350 108 L 262 130"/>
+            <g><title>HandleChildCompletion erases c1; set empty; parent erased; SendReply OK</title><rect class="box-e" x="175" y="130" width="150" height="58" rx="6"/><text x="250" y="148" text-anchor="middle" class="lbl">erase c1: set empty</text><text x="250" y="163" text-anchor="middle" class="lbl">erase parent</text><text x="250" y="178" text-anchor="middle" class="mono">NBD reply: OK</text></g>
+            <g><title>register child 2 throws out_of_range</title><rect class="box-e" x="20" y="210" width="140" height="48" rx="6"/><text x="90" y="228" text-anchor="middle" class="lbl">i=1: register c2</text><text x="90" y="246" text-anchor="middle" class="mono">throws: not active</text></g>
+            <text x="250" y="230" text-anchor="middle" class="lbl">c2 (mirror M1) is never sent.</text>
+            <text x="250" y="246" text-anchor="middle" class="lbl">Kernel already saw OK.</text>
+            <text x="250" y="280" text-anchor="middle" class="lbl">Same shape for a 2-segment read: half a payload, spurious EIO.</text>
+          </svg>
+        </div>
+      </div>
+      <div class="grid gap-3 text-sm md:grid-cols-3">
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Repro scenario</p><p class="opacity-80">Three minions, <span class="font-mono">fio randwrite</span> with more in-flight requests than cores so workers get preempted. Watch for <span class="font-mono">"parent request is not active"</span> in the log while the kernel reports success.</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Impact</p><p class="opacity-80">Silent partial write on the happy-path RAID10 write. For cross-stripe reads: half the data and a spurious <span class="font-mono">EIO</span>.</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Fix</p><p class="opacity-80">Register the whole child set under the lock first, then send. Or declare the expected count in <span class="font-mono">StartRequest</span> and make readiness "all registered AND set empty". See <a href="#opt-n1" class="link">optimization D</a>.</p></div>
+      </div>
+      <details class="collapse collapse-arrow bg-base-100"><summary class="collapse-title text-sm font-semibold">Tests that would pin it</summary><div class="collapse-content text-sm opacity-80"><ul class="list-disc pl-5"><li>Fake proxy that invokes the completion callback synchronously inside <span class="font-mono">SendWriteRequest</span>; assert both operations are sent and the request completes exactly once.</li><li>Same for a two-segment read; assert the full payload.</li><li>Stress: many two-child writes under a multi-worker pool with randomized reply delays, under ThreadSanitizer.</li></ul></div></details>
+    </div>
+  </article>
+
+  <article id="F4" class="issue sev-P1 card mt-4 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="badge badge-error">P1</span>
+        <span class="badge badge-ghost font-mono">F4 + N10</span>
+        <h4 class="text-lg font-semibold">Overlapping writes can land in any order, and a retransmit can resurrect old data</h4>
+      </div>
+      <p class="text-sm opacity-90"><strong>What goes wrong.</strong> The kernel sends W1 then W2 to the same offset. Nothing between the NBD socket and the minion's <span class="font-mono">pwrite</span> preserves that order. There are five independent places they can swap, and a sixth failure that needs no concurrency at all.</p>
+      <svg class="fig" viewBox="0 0 960 210" role="img" aria-labelledby="t6">
+        <title id="t6">Five reorder points between NBD arrival and minion pwrite, plus retransmit resurrection</title>
+        <g><title>NBD arrival: W1 then W2, in order</title><rect class="box-ok" x="10" y="40" width="130" height="50" rx="6"/><text x="75" y="60" text-anchor="middle" class="lbl">NBD arrival</text><text x="75" y="78" text-anchor="middle" class="mono">W1, W2 in order</text></g>
+        <path class="edge" d="M140 65H160"/>
+        <g><title>1. NBDProxy pending map keyed by UUID only; no offset index, conflict undetectable</title><rect class="box-e" x="162" y="40" width="140" height="50" rx="6"/><text x="232" y="60" text-anchor="middle" class="lbl">1. NBDProxy</text><text x="232" y="78" text-anchor="middle" class="mono">keyed by UUID only</text></g>
+        <path class="edge" d="M302 65H322"/>
+        <g><title>2. ThreadPool: both at MED priority, N workers pop concurrently</title><rect class="box-e" x="324" y="40" width="140" height="50" rx="6"/><text x="394" y="60" text-anchor="middle" class="lbl">2. ThreadPool</text><text x="394" y="78" text-anchor="middle" class="mono">worker A / worker B</text></g>
+        <path class="edge" d="M464 65H484"/>
+        <g><title>3. One UDP datagram each, no sequence number</title><rect class="box-e" x="486" y="40" width="140" height="50" rx="6"/><text x="556" y="60" text-anchor="middle" class="lbl">3. UDP</text><text x="556" y="78" text-anchor="middle" class="mono">no seq, no epoch</text></g>
+        <path class="edge" d="M626 65H646"/>
+        <g><title>4. Minion ThreadPool again</title><rect class="box-e" x="648" y="40" width="140" height="50" rx="6"/><text x="718" y="60" text-anchor="middle" class="lbl">4. Minion pool</text><text x="718" y="78" text-anchor="middle" class="mono">multi-worker again</text></g>
+        <path class="edge" d="M788 65H808"/>
+        <g><title>5. pwrite with no per-range lock</title><rect class="box-e" x="810" y="40" width="140" height="50" rx="6"/><text x="885" y="60" text-anchor="middle" class="lbl">5. pwrite</text><text x="885" y="78" text-anchor="middle" class="mono">no range lock</text></g>
+        <g><title>6. Retransmit resurrection: W1 dropped, W2 acked, retry re-sends W1 with same UUID, minion applies it</title><rect class="box-w" x="162" y="115" width="788" height="84" rx="6"/><text x="180" y="135" class="lbl">6. Needs no concurrency (N10). W1's datagram is dropped; W2 completes and is acked.</text><text x="180" y="152" class="lbl">100 ms later AsyncInjection retransmits W1 with the same child UUID.</text><text x="180" y="169" class="lbl">The minion has no dedup and no epoch, so it applies W1 over W2.</text><text x="180" y="186" class="lbl">Old data reappears after the kernel saw both writes succeed.</text></g>
+      </svg>
+      <div class="grid gap-3 text-sm md:grid-cols-3">
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Repro scenario</p><p class="opacity-80"><span class="font-mono">fio --rw=randwrite --verify=crc32c</span> against the mounted device with <span class="font-mono">tc netem loss 5%</span>. The verify pass will find blocks holding an older generation.</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Impact</p><p class="opacity-80">Persisted bytes depend on scheduling and packet arrival, not on kernel order. A read overlapping a write can return torn or pre-write data. The read-retry issue in <span class="font-mono">known-issues.md</span> is the same defect seen from the read side.</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Fix</p><p class="opacity-80">A <span class="font-mono">RangeSequencer</span> owned by <span class="font-mono">MasterRuntime</span>: <span class="font-mono">Submit(offset, len, exclusive, dispatch)</span> runs now if the range is free, else parks FIFO. Plus a per-range epoch in the wire header so a stale retransmit is dropped by the minion. See <a href="#opt-a" class="link">optimization A</a>.</p></div>
+      </div>
+      <details class="collapse collapse-arrow bg-base-100"><summary class="collapse-title text-sm font-semibold">Tests that would pin it</summary><div class="collapse-content text-sm opacity-80"><ul class="list-disc pl-5"><li><span class="font-mono">RangeSequencer</span> unit tests: full overlap, partial overlap, adjacency, shared readers vs exclusive writer.</li><li>Master-level test with a recording fake proxy: minion-visible apply order equals NBD arrival order under a multi-worker pool.</li><li>Retransmit-resurrection test: drop W1, complete W2, fire the retry, assert the minion rejects W1.</li><li><span class="font-mono">MinionStorageBackend</span> concurrent overlapping-write tear test.</li></ul></div></details>
+    </div>
+  </article>
+
+  <!-- P2 -->
+  <h3 class="mt-10 text-xl font-semibold text-warning">P2: real defects that need timing, config, or uptime to bite</h3>
+
+  <article id="N2" class="issue sev-P2 card mt-4 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N2</span><h4 class="text-lg font-semibold">Failover is dead code: nothing ever marks a node down</h4></div>
+      <p class="text-sm opacity-90"><strong>What goes wrong.</strong> <span class="font-mono">NodeInfo::active</span> is set true at <span class="font-mono">RegisterNode</span> and never changes. <span class="font-mono">SetNodeActive</span>, <span class="font-mono">SetNodeHealth</span>, and <span class="font-mono">SendHeartbeatRequest</span> have no non-test callers (re-checked with grep today). So every <span class="font-mono">if (segment.primary.active)</span> is permanently true and the mirror branch in <span class="font-mono">SelectReadTarget</span> is unreachable. Separately, <span class="font-mono">out_of_sync</span> is written but read selection never consults it, so a recovered stale primary would serve old data as <span class="font-mono">OK</span>.</p>
+      <div class="grid gap-3 text-sm md:grid-cols-3">
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Repro scenario</p><p class="opacity-80">Start the 3-minion demo, write a file, <span class="font-mono">kill -9</span> minion 1, read the file. Expected: served from minion 2's mirror. Actual: 10 retries, then <span class="font-mono">EIO</span> on every block whose primary was minion 1.</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Impact</p><p class="opacity-80">A single node failure takes down the whole device, contradicting the degraded-mode claim in <span class="font-mono">system-overview.md</span>. The README is honest about this ("what is missing is the detector").</p></div>
+        <div class="rounded-box bg-base-100 p-3"><p class="font-semibold">Fix</p><p class="opacity-80">A scheduled heartbeat per node registered with <span class="font-mono">ResponseManager</span>; on timeout call <span class="font-mono">SetNodeActive(false)</span>. Make target selection treat out-of-sync replicas as read-ineligible. This is roadmap milestone 16 pulled forward.</p></div>
+      </div>
+      <details class="collapse collapse-arrow bg-base-100"><summary class="collapse-title text-sm font-semibold">Tests that would pin it</summary><div class="collapse-content text-sm opacity-80"><ul class="list-disc pl-5"><li>Mark a primary inactive, assert reads resolve to the mirror.</li><li>Heartbeat timeout flips <span class="font-mono">active</span> to false.</li><li>An out-of-sync primary is not chosen for reads.</li><li>E2E: kill a minion mid-run, device keeps serving.</li></ul></div></details>
+    </div>
+  </article>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <article id="F7" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">F7</span><h4 class="font-semibold">make test never runs the 13 framework tests</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> Verified today: <span class="font-mono">test: concrete-tests</span> loops <span class="font-mono">$(CONCRETE_TEST_BINS)</span> only. <span class="font-mono">ThreadPoolTest</span>, <span class="font-mono">ReactorTest</span>, <span class="font-mono">DirMonitorTest</span>, <span class="font-mono">SchedulerTest</span> and nine others exist but no target names them. Commit 13689e3 changed <span class="font-mono">DirMonitor.cpp</span> with zero coverage.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Add <span class="font-mono">FRAMEWORK_TEST_SRCS</span> and a <span class="font-mono">framework-tests</span> target; make <span class="font-mono">test</span> and <span class="font-mono">all</span> depend on it. Run <span class="font-mono">DirMonitorTest</span> / <span class="font-mono">DllLoaderTest</span> from <span class="font-mono">framework/</span> because they build a plugin via relative paths.</p>
+      </div>
+    </article>
+    <article id="F8" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">F8</span><h4 class="font-semibold">Runtime is a global pointer with no mutex, cleared before the pool stops</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">MasterRuntime.cpp:465-485</span>: <span class="font-mono">g_activeRuntime</span> is a plain pointer written by main and read by pool workers. <span class="font-mono">MasterNBDMain</span> calls <span class="font-mono">ClearActiveMasterRuntime()</span> right after <span class="font-mono">framework.Run()</span> returns, but the pool stops later in <span class="font-mono">~Framework</span>. A worker mid-command throws "No active MasterRuntime", the catch swallows it, and the NBD reply is never sent. The kernel hangs on that request.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Bind the runtime into the command creator (<a href="#opt-c" class="link">optimization C</a>). Deletes both globals.</p>
+      </div>
+    </article>
+    <article id="F10" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">F10 + N5</span><h4 class="font-semibold">No authenticity or freshness on the wire; minion trusts any source</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">MasterProxy::GetTask</span> on the minion does no source check and caches whatever address the datagram came from as the master reply address (<span class="font-mono">MasterProxy.cpp:136-158</span>, confirmed). On the master, a spoofed <span class="font-mono">READ_RESP</span> from the minion's IP:port with a guessed UUID (counter + seconds + pid + IP) completes an in-flight read with attacker data.</p>
+        <p class="text-sm opacity-80"><strong>Fix (tiered).</strong> Now: a master-endpoint source check on the minion mirroring <span class="font-mono">IsExpectedEndpoint</span>. Later: per-node keys, HMAC per datagram, per-node sequence with a replay window. README already documents the trusted-LAN assumption.</p>
+      </div>
+    </article>
+    <article id="F12" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">F12</span><h4 class="font-semibold">Ctrl-C can deadlock the master with /dev/nbd0 still attached</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">OnSignal</span> calls <span class="font-mono">RequestFrameworkStop()</span>, which takes a non-recursive mutex the main thread also holds inside <span class="font-mono">Framework::Run()</span>. A SIGINT delivered inside that window deadlocks in <span class="font-mono">pthread_mutex_lock</span>. Only SIGKILL exits, and kernel block I/O on the device hangs. The handler can also <span class="font-mono">new</span> a Handleton on first touch and writes a plain <span class="font-mono">bool</span>.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Handler does only <span class="font-mono">write()</span> to the stop pipe published in an <span class="font-mono">atomic&lt;int&gt;</span>. Or block signals and register a <span class="font-mono">signalfd</span> in the reactor. See <a href="#opt-sig" class="link">optimization F</a>.</p>
+      </div>
+    </article>
+    <article id="N3" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N3</span><h4 class="font-semibold">~Framework dlcloses plugins before the pool drains</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> Confirmed in <span class="font-mono">Framework.cpp:189-216</span>: <span class="font-mono">delete m_pluginLoader</span> (which dlcloses every .so) happens before <span class="font-mono">Handleton&lt;ThreadPool&gt;::GetInstance()-&gt;Stop()</span>. A worker still executing a plugin command jumps into unmapped code. Factory entries for the plugin's keys are never removed either.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Stop and join the pool first, then unload. Remove factory entries on unload.</p>
+      </div>
+    </article>
+    <article id="N6" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N6</span><h4 class="font-semibold">Disconnect can hang forever or leave a zombie NBD child</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">NBDCommunicator::Disconnect</span> ignores the <span class="font-mono">NBD_DISCONNECT</span> ioctl result, then does an unbounded <span class="font-mono">waitpid</span> with no EINTR retry and clears <span class="font-mono">m_childPid</span> unconditionally. If the ioctl silently fails the destructor blocks forever. If a signal interrupts, the child is never reaped.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Check the ioctl, loop on EINTR, clear the pid only after reaping, bounded wait with SIGKILL fallback.</p>
+      </div>
+    </article>
+    <article id="N7" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N7</span><h4 class="font-semibold">Failed multi-child requests leak sibling state forever</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> When child A fails, <span class="font-mono">CompleteRequestIfReady</span> erases only the parent. Sibling B stays in <span class="font-mono">m_childToParent</span> and in <span class="font-mono">ResponseManager</span>. The common cause is a dead minion whose siblings never answer, so the entries never self-heal. Memory grows with every failed mirrored write during an outage.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Route the failure path through the same teardown helper <span class="font-mono">AbortRequest</span> already uses.</p>
+      </div>
+    </article>
+    <article id="N8" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N8 + N14</span><h4 class="font-semibold">A pending retry fires on a destroyed MasterRuntime</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> Confirmed in <span class="font-mono">MakeRetryParams</span>: the action captures <span class="font-mono">[&amp;runtime, parent_request_id]</span>. <span class="font-mono">MasterRuntime</span> is a stack object in <span class="font-mono">RunMasterNBD</span>; the <span class="font-mono">Scheduler</span> singleton outlives it. A retry armed at shutdown calls <span class="font-mono">RetransmitPendingChildren</span> on freed memory. Root cause: <span class="font-mono">AsyncInjection</span> owns itself (<span class="font-mono">delete this</span>) and has no cancel handle (N14).</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Return an owning handle from scheduling; cancel all pending retries in <span class="font-mono">~MasterRuntime</span>.</p>
+      </div>
+    </article>
+    <article id="N9" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N9</span><h4 class="font-semibold">Scheduler timer thread can run after atexit destroyed the Scheduler</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">Scheduler</span> is a <span class="font-mono">Singleton</span> deleted via <span class="font-mono">std::atexit</span>. Its <span class="font-mono">SIGEV_THREAD</span> callback calls <span class="font-mono">GetInstance()-&gt;HandleTimer()</span>, but <span class="font-mono">GetInstance</span> returns a cached static pointer that is never re-read, so after deletion it dangles. <span class="font-mono">timer_delete</span> does not stop an already-triggered notification thread.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Owned shutdown that disarms and joins before exit; <span class="font-mono">GetInstance</span> should return <span class="font-mono">m_instance</span> so a destroyed singleton reads null.</p>
+      </div>
+    </article>
+    <article id="N4" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">N4</span><h4 class="font-semibold">select() with fd &gt;= 1024 corrupts the stack</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> <span class="font-mono">LinuxFdListener::Listen</span> checks only <span class="font-mono">fd &lt; 0</span>, then <span class="font-mono">FD_SET</span>s it. A long-running master that churns through sockets past fd 1023 writes past the stack <span class="font-mono">fd_set</span>. Latent today, a hard ceiling for the intended always-on deployment.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Reject <span class="font-mono">fd &gt;= FD_SETSIZE</span> now; migrate to <span class="font-mono">poll</span> or <span class="font-mono">epoll</span> (see <a href="#opt-poll" class="link">optimization G</a>).</p>
+      </div>
+    </article>
+    <article id="F2r" class="issue sev-P2 card scroll-mt-6 bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-warning">P2</span><span class="badge badge-ghost font-mono">F2 residual</span><h4 class="font-semibold">ReadAll can stall the reactor; payload length is uncapped</h4></div>
+        <p class="text-sm opacity-80"><strong>Example.</strong> After readiness, <span class="font-mono">ReadAll</span> blocks the reactor thread with no timeout. If the kernel-side child dies mid-message the reactor stalls. <span class="font-mono">out.payload.resize(out.length)</span> trusts the 32-bit kernel length with no sanity cap.</p>
+        <p class="text-sm opacity-80"><strong>Fix.</strong> Cap <span class="font-mono">length</span> against the configured block size; bounded read with a poll timeout.</p>
+      </div>
+    </article>
+  </div>
+
+  <!-- P3 -->
+  <h3 class="mt-10 text-xl font-semibold text-info">P3: latent, hygiene, and documentation</h3>
+  <p class="mt-1 text-sm opacity-80">Batch these whenever the owning module is already open. None blocks a release on its own.</p>
+  <div class="mt-3 overflow-x-auto rounded-box border border-base-content/10 bg-base-100">
+    <table class="table table-sm">
+      <thead><tr><th>ID</th><th>What goes wrong</th><th>Concrete example</th><th>Fix</th></tr></thead>
+      <tbody class="text-sm">
+        <tr><td class="font-mono">F5r</td><td>Plugin loads on <span class="font-mono">IN_CREATE</span> and every <span class="font-mono">IN_MODIFY</span>; DllLoader memoizes by path</td><td><span class="font-mono">rsync --inplace</span> of a .so: dlopen may succeed on a partial image, the handle is cached, and the completed file is skipped as "already loaded"</td><td>Load only on <span class="font-mono">IN_CLOSE_WRITE | IN_MOVED_TO</span>; document rename-based deploys</td></tr>
+        <tr><td class="font-mono">F9</td><td>Master decoders accept trailing bytes; minion rejects them</td><td>A response datagram with 3 extra bytes is accepted by <span class="font-mono">MinionResponseProxy</span>, would be dropped by <span class="font-mono">MasterProxy</span></td><td>One <span class="font-mono">wire::DecodeExact</span> used by all three sites (<a href="#opt-b" class="link">B</a>)</td></tr>
+        <tr><td class="font-mono">F11 + N16</td><td><span class="font-mono">Framework</span> is copyable; ctor leaks on throw</td><td>Passing <span class="font-mono">Framework</span> by value compiles clean, then double-deletes <span class="font-mono">DllLoader</span> and double-closes the stop pipe</td><td>Delete special members; <span class="font-mono">unique_ptr</span> + RAII pipe; <span class="font-mono">static_assert</span></td></tr>
+        <tr><td class="font-mono">F13r</td><td><span class="font-mono">compile_commands.json</span> tracked and stale</td><td>Verified today: still tracked; entries point at <span class="font-mono">/home/moranayal/repos/ILRD/git/projects/final_project/</span> so clangd resolves nothing on a fresh clone</td><td><span class="font-mono">git rm --cached</span>, ignore, regenerate with <span class="font-mono">bear</span></td></tr>
+        <tr><td class="font-mono">F1r</td><td>Demo script default size ignores stripe alignment</td><td><span class="font-mono">run_single_machine_nbd.sh</span> computes <span class="font-mono">(min_capacity / 2) * MINION_COUNT</span>; a non-aligned capacity makes the master reject its own default</td><td>Align down to the stripe in the script</td></tr>
+        <tr><td class="font-mono">F3r</td><td>No poison flag after a partial NBD reply write</td><td>If the payload <span class="font-mono">WriteAll</span> throws, the mutex releases with the stream desynchronized</td><td>Coalesce header + payload in one <span class="font-mono">writev</span>; mark communicator broken on partial write</td></tr>
+        <tr><td class="font-mono">F6r</td><td><span class="font-mono">SingleMinionNodeId()</span> returns a non-const static reference</td><td>Any caller can mutate the shared id</td><td>Make it <span class="font-mono">static const</span></td></tr>
+        <tr><td class="font-mono">N11</td><td>Forked NBD child inherits every master fd</td><td>The child closes only <span class="font-mono">sockets[0]</span>; UDP sockets and the stop pipe stay half-open for the life of the attachment. <span class="font-mono">CLOEXEC</span> would not help: the child never execs</td><td>Close all fds except <span class="font-mono">sockets[1]</span> and <span class="font-mono">nbd_fd</span> in the child</td></tr>
+        <tr><td class="font-mono">N12</td><td><span class="font-mono">sendto</span> not retried on EINTR</td><td>A signal during send drops that datagram; the retry path masks it on the NBD flow only</td><td>Loop on EINTR</td></tr>
+        <tr><td class="font-mono">N13</td><td>Blocking <span class="font-mono">recvfrom</span> on the reactor thread</td><td><span class="font-mono">MinionResponseProxy</span> has no <span class="font-mono">MSG_DONTWAIT</span>; a spurious readiness blocks the whole reactor</td><td><span class="font-mono">MSG_DONTWAIT</span>, treat EAGAIN as no datagram</td></tr>
+        <tr><td class="font-mono">N15</td><td><span class="font-mono">AddTask</span> silently drops after <span class="font-mono">Stop</span></td><td>A <span class="font-mono">TPFutureTask::Get</span> waiter would block forever; no production caller today</td><td>Return <span class="font-mono">bool</span> or throw</td></tr>
+        <tr><td class="font-mono">N17</td><td><span class="font-mono">Reactor::Stop</span> uses plain bools cross-thread</td><td>Docstring invites cross-thread <span class="font-mono">Stop</span>; it races and cannot wake a blocked <span class="font-mono">select</span></td><td>Atomics + self-pipe in <span class="font-mono">Reactor::Stop</span></td></tr>
+        <tr><td class="font-mono">N18</td><td><span class="font-mono">ThreadPool</span> control surface unsynchronized</td><td><span class="font-mono">SetNumThreads</span> and <span class="font-mono">Stop</span> race on <span class="font-mono">m_workers</span>; no callers outside tests</td><td>Guard with a mutex before exposing as supported API</td></tr>
+        <tr><td class="font-mono">F14</td><td>No root README</td><td>A 121-line README now exists in the working tree</td><td>Commit it (on a feature branch, per repo policy)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. ROADMAP                                                   -->
+<!-- ============================================================ -->
+<section id="roadmap" class="mt-16 scroll-mt-6">
+  <h2 class="text-3xl font-bold">3. Roadmap and next steps</h2>
+  <p class="mt-2 max-w-3xl opacity-80">Two documents disagree about what comes next. The roadmap and step-order say "persistent metadata". The July review says "fix N1, F4, N2 first". This section shows both and recommends a merged order.</p>
+
+  <!-- 3.1 Milestone progress -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">3.1 Where the roadmap stands</h3>
+      <ul class="steps steps-vertical mt-2 w-full lg:steps-horizontal">
+        <li class="step step-success" data-content="✓"><span class="text-xs">1-3 Docs, wire protocol, task types</span></li>
+        <li class="step step-success" data-content="✓"><span class="text-xs">4-5 Minion transport + storage</span></li>
+        <li class="step step-success" data-content="✓"><span class="text-xs">6-7 Master transport + correlation</span></li>
+        <li class="step step-success" data-content="✓"><span class="text-xs">8-10 Commands, sim, metadata v1</span></li>
+        <li class="step step-success" data-content="✓"><span class="text-xs">11-12 RAID10 + degraded v1</span></li>
+        <li class="step step-success" data-content="✓"><span class="text-xs">13-14 Real NBD + retransmit</span></li>
+        <li class="step step-primary" data-content="→"><span class="text-xs font-semibold">15 Persistent metadata</span></li>
+        <li class="step" data-content="16"><span class="text-xs">Discovery + health</span></li>
+        <li class="step" data-content="17"><span class="text-xs">Recovery / resync</span></li>
+        <li class="step" data-content="18"><span class="text-xs">Rebalance + CLI</span></li>
+        <li class="step" data-content="19"><span class="text-xs">Demo packaging</span></li>
+      </ul>
+      <div role="alert" class="alert alert-warning alert-soft mt-4 text-sm">
+        <span><strong>Tension.</strong> Milestone 12 "degraded-mode v1" is marked done, but its read-failover branch is unreachable (N2). Milestone 15 would persist <span class="font-mono">out_of_sync</span> state that nothing currently sets correctly. Persisting broken state does not make it less broken.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.2 Recommended order -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">3.2 Recommended order of work</h3>
+      <p class="text-sm opacity-80">Six phases. Each phase unblocks the next, and each ends with something demonstrable. The phase names are this report's; the item IDs are from the reviews and roadmap.</p>
+      <svg class="fig mt-4" viewBox="0 0 960 300" role="img" aria-labelledby="t7">
+        <title id="t7">Recommended phases: stop the bleeding, consistency, liveness, safe shutdown, deepen seams, then the roadmap milestones</title>
+        <line x1="20" y1="60" x2="940" y2="60" stroke="currentColor" stroke-opacity="0.3" stroke-width="2"/>
+        <g><title>Phase 0: N1 fix and F7 framework tests</title><circle cx="75" cy="60" r="9" fill="var(--color-error)"/><rect class="box-e" x="20" y="90" width="130" height="120" rx="8"/><text x="85" y="112" text-anchor="middle" class="ttl">0. Stop bleeding</text><text x="85" y="132" text-anchor="middle" class="lbl">N1 registration barrier</text><text x="85" y="148" text-anchor="middle" class="lbl">F7 framework tests in CI</text><text x="85" y="164" text-anchor="middle" class="lbl">N7 sibling cleanup</text><text x="85" y="195" text-anchor="middle" class="mono">~2-3 days</text></g>
+        <g><title>Phase 1: F4 range sequencer and N10 epoch</title><circle cx="230" cy="60" r="9" fill="var(--color-error)"/><rect class="box-e" x="170" y="90" width="130" height="120" rx="8"/><text x="235" y="112" text-anchor="middle" class="ttl">1. Consistency</text><text x="235" y="132" text-anchor="middle" class="lbl">A. RangeSequencer</text><text x="235" y="148" text-anchor="middle" class="lbl">N10 epoch in header</text><text x="235" y="164" text-anchor="middle" class="lbl">minion dedup + lock</text><text x="235" y="195" text-anchor="middle" class="mono">~1-2 weeks</text></g>
+        <g><title>Phase 2: heartbeat liveness (N2, milestone 16 partial)</title><circle cx="385" cy="60" r="9" fill="var(--color-warning)"/><rect class="box-w" x="325" y="90" width="130" height="120" rx="8"/><text x="390" y="112" text-anchor="middle" class="ttl">2. Liveness</text><text x="390" y="132" text-anchor="middle" class="lbl">N2 heartbeat scheduler</text><text x="390" y="148" text-anchor="middle" class="lbl">node down on timeout</text><text x="390" y="164" text-anchor="middle" class="lbl">out_of_sync-aware reads</text><text x="390" y="195" text-anchor="middle" class="mono">~1 week (M16 part)</text></g>
+        <g><title>Phase 3: shutdown safety cluster</title><circle cx="540" cy="60" r="9" fill="var(--color-warning)"/><rect class="box-w" x="480" y="90" width="130" height="120" rx="8"/><text x="545" y="112" text-anchor="middle" class="ttl">3. Safe shutdown</text><text x="545" y="132" text-anchor="middle" class="lbl">F12 signalfd / write-only</text><text x="545" y="148" text-anchor="middle" class="lbl">N14 cancellable injection</text><text x="545" y="164" text-anchor="middle" class="lbl">N3 N6 N8 N9 ordering</text><text x="545" y="195" text-anchor="middle" class="mono">~1 week</text></g>
+        <g><title>Phase 4: architecture deepening C, D, B</title><circle cx="695" cy="60" r="9" fill="var(--color-info)"/><rect class="box" x="635" y="90" width="130" height="120" rx="8"/><text x="700" y="112" text-anchor="middle" class="ttl">4. Deepen seams</text><text x="700" y="132" text-anchor="middle" class="lbl">C. runtime-bound (F8)</text><text x="700" y="148" text-anchor="middle" class="lbl">D. placement plan</text><text x="700" y="164" text-anchor="middle" class="lbl">B. DecodeExact, F10 min.</text><text x="700" y="195" text-anchor="middle" class="mono">~1-2 weeks</text></g>
+        <g><title>Phase 5: roadmap milestones 15, 17, 18, 19</title><circle cx="850" cy="60" r="9" fill="var(--color-success)"/><rect class="box-ok" x="790" y="90" width="150" height="120" rx="8"/><text x="865" y="112" text-anchor="middle" class="ttl">5. Roadmap</text><text x="865" y="132" text-anchor="middle" class="lbl">M15 persistent metadata</text><text x="865" y="148" text-anchor="middle" class="lbl">M17 resync, M18 CLI</text><text x="865" y="164" text-anchor="middle" class="lbl">M19 demo packaging</text><text x="865" y="195" text-anchor="middle" class="mono">then</text></g>
+        <text x="480" y="40" text-anchor="middle" class="lbl">time, left to right. Estimates are rough and assume one engineer.</text>
+        <text x="480" y="250" text-anchor="middle" class="lbl">Phases 0-1 make the data correct. Phase 2 makes the mirror useful. Phase 3 makes restarts safe. Phase 4 makes the rest cheaper to build.</text>
+        <text x="480" y="270" text-anchor="middle" class="lbl">Latent P3 hardening (N4, N11-N13, N15, N17, N18) rides along whenever the owning module is open.</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="mt-6 overflow-x-auto rounded-box border border-base-content/10 bg-base-100">
+    <table class="table table-sm">
+      <thead><tr><th>#</th><th>Do</th><th>Why now</th><th>Unblocks</th><th>Done when</th></tr></thead>
+      <tbody class="text-sm">
+        <tr><td class="num">1</td><td>Fix N1: register all children under the lock, then send</td><td>Silent data loss on the happy-path mirrored write. Smallest fix with the largest risk reduction.</td><td>Trust in every RAID10 result after it</td><td>Synchronous-callback fake-proxy test passes; TSan stress passes</td></tr>
+        <tr><td class="num">2</td><td>Fix F7: <span class="font-mono">framework-tests</span> target in <span class="font-mono">make test</span></td><td>Every later phase touches the framework. Without this, phases 3 and 4 land blind.</td><td>Safe refactors in phases 3-4</td><td><span class="font-mono">make test</span> log shows all 13 framework binaries</td></tr>
+        <tr><td class="num">3</td><td>Fix N7 while in <span class="font-mono">MasterRuntime</span></td><td>Same file, same lock, ten lines.</td><td>Stable memory during outages</td><td>Failed two-child request leaves no entries in <span class="font-mono">m_childToParent</span></td></tr>
+        <tr><td class="num">4</td><td>F4: <span class="font-mono">RangeSequencer</span> + write epoch (N10)</td><td>The deepest gap. Without it, "filesystem on top" is not honest.</td><td>Any correctness claim; fio verify demo</td><td><span class="font-mono">fio randwrite --verify</span> under netem loss passes</td></tr>
+        <tr><td class="num">5</td><td>N2: heartbeat scheduler + <span class="font-mono">SetNodeActive</span> + out-of-sync-aware selection</td><td>The mirror is written but never read. This is the demo-visible feature.</td><td>M15 persistence has real state to persist; M17 resync has a trigger</td><td>Kill a minion mid-run, device keeps serving; degraded flag visible</td></tr>
+        <tr><td class="num">6</td><td>F12 + N14 + N3/N6/N8/N9: teardown ordering and cancellation</td><td>Exercised on every restart. Cheap once N14 gives a cancel handle.</td><td>Reliable restarts for M15 persistence testing</td><td>SIGINT under load exits cleanly with <span class="font-mono">/dev/nbd0</span> detached; no ASan/TSan reports</td></tr>
+        <tr><td class="num">7</td><td>C: runtime-bound commands (F8), D: placement plan, B: <span class="font-mono">DecodeExact</span> (F9), minion source check (N5)</td><td>Removes the global seam and the write-path duplication that N1 hid in.</td><td>Isolated command tests; two runtimes per process</td><td><span class="font-mono">GetActiveMasterRuntime</span> deleted; commands constructible in a unit test</td></tr>
+        <tr><td class="num">8</td><td>M15 persistent metadata, then M17 resync, M18 rebalance + CLI, M19 demo</td><td>Now the state being persisted is correct and the recovery trigger exists.</td><td>Product story</td><td>Master restarts without changing placement; recovered minion resyncs and clears <span class="font-mono">out_of_sync</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. OPTIMIZATIONS                                             -->
+<!-- ============================================================ -->
+<section id="opts" class="mt-16 scroll-mt-6">
+  <h2 class="text-3xl font-bold">4. Proposed optimizations</h2>
+  <p class="mt-2 max-w-3xl opacity-80">These are structural changes, not micro-optimizations. Each names what it improves and which findings it closes, with before/after code where the change is concrete enough to show.</p>
+
+  <!-- target architecture -->
+  <div class="card card-border mt-6 bg-base-200/40">
+    <div class="card-body">
+      <h3 class="card-title">Target shape of the master after A, C, and D</h3>
+      <svg class="fig mt-3" viewBox="0 0 960 230" role="img" aria-labelledby="t8">
+        <title id="t8">Before and after: commands reaching a global runtime versus commands bound to a runtime that owns a RangeSequencer and a placement planner</title>
+        <text x="220" y="24" text-anchor="middle" class="ttl">Today</text>
+        <g><title>Command reaches a global pointer</title><rect class="box-p" x="30" y="45" width="150" height="34" rx="6"/><text x="105" y="67" text-anchor="middle" class="mono">MasterWriteCommand</text></g>
+        <g><title>GetActiveMasterRuntime file-static, no mutex</title><rect class="box-e" x="30" y="100" width="150" height="34" rx="6"/><text x="105" y="122" text-anchor="middle" class="mono">g_activeRuntime</text></g>
+        <path class="edge-e" d="M105 79V98"/>
+        <g><title>Command re-derives placement, degraded policy, slicing</title><rect class="box-w" x="230" y="45" width="180" height="34" rx="6"/><text x="320" y="67" text-anchor="middle" class="lbl">re-derives primary/mirror/</text></g>
+        <text x="320" y="95" text-anchor="middle" class="lbl">degraded/slice policy x3 commands</text>
+        <g><title>Register and send one child at a time</title><rect class="box-e" x="230" y="120" width="180" height="34" rx="6"/><text x="320" y="142" text-anchor="middle" class="lbl">register + send per child (N1)</text></g>
+        <g><title>No ordering</title><rect class="box-e" x="30" y="160" width="380" height="34" rx="6"/><text x="220" y="182" text-anchor="middle" class="lbl">no ordering across overlapping requests (F4)</text></g>
+
+        <line x1="470" y1="30" x2="470" y2="210" stroke="currentColor" stroke-opacity="0.2"/>
+        <text x="720" y="24" text-anchor="middle" class="ttl">After</text>
+        <g><title>Command constructed with Runtime reference</title><rect class="box-p" x="500" y="45" width="180" height="34" rx="6"/><text x="590" y="67" text-anchor="middle" class="mono">WriteCommand(Runtime&amp;)</text></g>
+        <g><title>Runtime owns sequencer and planner</title><rect class="box-ok" x="500" y="100" width="180" height="34" rx="6"/><text x="590" y="122" text-anchor="middle" class="mono">MasterRuntime (owned)</text></g>
+        <path class="edge" d="M590 79V98"/>
+        <g><title>RangeSequencer: Submit parks conflicts FIFO</title><rect class="box-ok" x="720" y="45" width="210" height="34" rx="6"/><text x="825" y="67" text-anchor="middle" class="mono">RangeSequencer::Submit</text></g>
+        <g><title>PlacementPlan: full plan, registered atomically, then dispatched</title><rect class="box-ok" x="720" y="100" width="210" height="34" rx="6"/><text x="825" y="122" text-anchor="middle" class="mono">RAIDManager::Plan(op)</text></g>
+        <path class="edge" d="M680 62H718"/><path class="edge" d="M680 117H718"/>
+        <g><title>Register whole plan, then send all</title><rect class="box-ok" x="500" y="160" width="430" height="34" rx="6"/><text x="715" y="182" text-anchor="middle" class="lbl">register whole plan, then send all (closes N1); ordered per range (closes F4)</text></g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- A -->
+  <article id="opt-a" class="card card-border mt-6 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">A</span><h3 class="text-lg font-semibold">Range-ordering module</h3><span class="badge badge-ghost badge-sm">closes F4, N10, known-issues read-retry</span></div>
+      <p class="text-sm opacity-80"><strong>Improves:</strong> overlapping writes apply in NBD arrival order; reads never see a torn or pre-write block; a stale retransmit is dropped. <strong>Cost:</strong> one new class in <span class="font-mono">MasterRuntime</span>, one header field (epoch), and a small interval lock on the minion. Non-blocking parking, so pool workers never stall.</p>
+      <p class="text-xs opacity-70">concrete/master/src/MasterCommands.cpp, write dispatch (sketch)</p>
+      <div id="diff-a" class="diffwrap"></div>
+    </div>
+  </article>
+
+  <!-- D / N1 -->
+  <article id="opt-n1" class="card card-border mt-6 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">D</span><h3 class="text-lg font-semibold">Placement-plan module, and the minimal N1 barrier</h3><span class="badge badge-ghost badge-sm">closes N1, contains N8 captures, removes x3 policy duplication</span></div>
+      <p class="text-sm opacity-80"><strong>Improves:</strong> <span class="font-mono">RAIDManager</span> returns a ready-to-dispatch plan with owned proxy handles. The three master commands stop re-deriving primary/mirror/degraded/slice policy. The whole plan is registered atomically before any send, which is the N1 fix. The minimal version below is a same-day change; the full plan module is phase 4.</p>
+      <p class="text-xs opacity-70">concrete/master/src/MasterCommands.cpp:281-301 (minimal barrier)</p>
+      <div id="diff-n1-fix" class="diffwrap"></div>
+    </div>
+  </article>
+
+  <!-- C -->
+  <article id="opt-c" class="card card-border mt-6 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">C</span><h3 class="text-lg font-semibold">Runtime-bound command adapters</h3><span class="badge badge-ghost badge-sm">closes F8 incl. shutdown drop window; highest testability payoff per line</span></div>
+      <p class="text-sm opacity-80"><strong>Improves:</strong> commands declare their dependency instead of reading a global; two runtimes can coexist in one process; commands are constructible in a unit test without the install/clear ritual. The framework change is one typedef: creators become <span class="font-mono">std::function&lt;std::unique_ptr&lt;ICommand&gt;()&gt;</span> so the map can capture the runtime.</p>
+      <p class="text-xs opacity-70">concrete/master/src/MasterCommands.cpp + MasterRuntime.cpp (sketch)</p>
+      <div id="diff-c" class="diffwrap"></div>
+    </div>
+  </article>
+
+  <!-- F signal -->
+  <article id="opt-sig" class="card card-border mt-6 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">F</span><h3 class="text-lg font-semibold">Async-signal-safe stop</h3><span class="badge badge-ghost badge-sm">closes F12, part of N17</span></div>
+      <p class="text-sm opacity-80"><strong>Improves:</strong> Ctrl-C can no longer deadlock on the framework mutex or allocate in a handler. The pipe's readability becomes the stop request, so <span class="font-mono">m_stopRequested</span> disappears. Cleanest on Linux is a <span class="font-mono">signalfd</span> registered in the reactor; the write-only handler below is the smaller step.</p>
+      <p class="text-xs opacity-70">framework/src/Framework.cpp, RequestFrameworkStop (sketch)</p>
+      <div id="diff-sig" class="diffwrap"></div>
+    </div>
+  </article>
+
+  <!-- B -->
+  <article id="opt-b" class="card card-border mt-6 scroll-mt-6 bg-base-200/40">
+    <div class="card-body">
+      <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">B</span><h3 class="text-lg font-semibold">One wire-codec seam</h3><span class="badge badge-ghost badge-sm">closes F9, shrinks F10 surface</span></div>
+      <p class="text-sm opacity-80"><strong>Improves:</strong> the three decode sites (<span class="font-mono">MasterProxy</span>, <span class="font-mono">MinionProxy</span>, <span class="font-mono">MinionResponseProxy</span>) share one strict decoder that requires exact size and returns either a validated message or a drop reason. Fuzzing and protocol v2 become one-place changes.</p>
+      <p class="text-xs opacity-70">concrete/master/src/MinionResponseProxy.cpp, DecodeResponse (sketch)</p>
+      <div id="diff-b" class="diffwrap"></div>
+    </div>
+  </article>
+
+  <!-- non-code optimizations -->
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <article id="opt-poll" class="card card-border bg-base-200/40 scroll-mt-6">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">G</span><h3 class="font-semibold">select() to poll()/epoll</h3><span class="badge badge-ghost badge-sm">closes N4</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> rebuild an <span class="font-mono">fd_set</span> every iteration, scan for <span class="font-mono">maxFd</span>, hard 1024 ceiling with stack corruption past it. <strong>After:</strong> a persistent <span class="font-mono">pollfd</span> vector (or an epoll set), no ceiling, no per-call rebuild. Reactor-internal change only; <span class="font-mono">ReactorTest</span> covers it once F7 runs it.</p>
+      </div>
+    </article>
+    <article class="card card-border bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">H</span><h3 class="font-semibold">Cancellable AsyncInjection</h3><span class="badge badge-ghost badge-sm">closes N14, enables N8/N9 fixes</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> <span class="font-mono">delete this</span> on completion, owned by nobody, never cancellable; a never-completing action leaks. <strong>After:</strong> scheduling returns an owning handle; <span class="font-mono">~MasterRuntime</span> cancels all pending retries. Also fixes the leak for requests that never complete.</p>
+      </div>
+    </article>
+    <article class="card card-border bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">I</span><h3 class="font-semibold">Single writev for NBD replies</h3><span class="badge badge-ghost badge-sm">closes F3 residual</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> two <span class="font-mono">WriteAll</span> calls under the mutex; a throw between them leaves the stream desynced. <strong>After:</strong> header and payload in one <span class="font-mono">writev</span>; on any partial write, mark the communicator broken so later replies fail fast instead of corrupting framing. One syscall instead of two per read reply.</p>
+      </div>
+    </article>
+    <article class="card card-border bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">J</span><h3 class="font-semibold">Collapse Singleton and Handleton</h3><span class="badge badge-ghost badge-sm">simplification, reduces N9 surface</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> two character-identical lazy-global mechanisms coexist; <span class="font-mono">Singleton::GetInstance</span> caches a static pointer that dangles after atexit. <strong>After:</strong> keep <span class="font-mono">Handleton</span> (it survives dlopen boundaries, which the plugin story needs), give it an owned shutdown. Worth a conscious decision given the roll-your-own learning goal, so this is "explore", not "must".</p>
+      </div>
+    </article>
+    <article class="card card-border bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">E</span><h3 class="font-semibold">Plugin-deployment adapter</h3><span class="badge badge-ghost badge-sm">closes F5 residual, pairs with N3</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> <span class="font-mono">Framework</span> subscribes to added and modified events and dlopens immediately; a partial image can be pinned. <strong>After:</strong> a <span class="font-mono">SubscribeReady</span> fired only on <span class="font-mono">IN_CLOSE_WRITE | IN_MOVED_TO</span>, exception containment, and unload that also removes factory keys. Document rename-based deploys.</p>
+      </div>
+    </article>
+    <article class="card card-border bg-base-200/40">
+      <div class="card-body p-5">
+        <div class="flex flex-wrap items-center gap-2"><span class="badge badge-primary">K</span><h3 class="font-semibold">Minimal transport trust</h3><span class="badge badge-ghost badge-sm">F10 / N5 first tier</span></div>
+        <p class="text-sm opacity-80"><strong>Before:</strong> minion answers anyone and redirects replies to the last sender. <strong>After (now):</strong> configured master endpoint check on the minion, mirroring the master's <span class="font-mono">IsExpectedEndpoint</span>. <strong>After (later):</strong> per-node key, HMAC over each datagram, per-node sequence with replay window. The header's reserved fields leave room for this without a v2.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. TEST GAPS                                                 -->
+<!-- ============================================================ -->
+<section id="tests" class="mt-16 scroll-mt-6">
+  <h2 class="text-3xl font-bold">5. Test gaps that let these bugs through</h2>
+  <div class="mt-4 overflow-x-auto rounded-box border border-base-content/10 bg-base-100">
+    <table class="table table-sm table-zebra">
+      <thead><tr><th>Gap</th><th>Would have caught</th><th>Add in phase</th></tr></thead>
+      <tbody class="text-sm">
+        <tr><td>No framework test runs under <span class="font-mono">make test</span></td><td>Any framework regression since June</td><td>0</td></tr>
+        <tr><td>No multi-child completion-ordering test</td><td>N1</td><td>0</td></tr>
+        <tr><td>No overlap, read-after-write, or retransmit-resurrection test</td><td>F4, N10</td><td>1</td></tr>
+        <tr><td>No failover test with an inactive primary; no heartbeat-timeout test</td><td>N2</td><td>2</td></tr>
+        <tr><td>No shutdown-under-signal test; no shutdown-with-armed-retry test under ASan</td><td>F12, N8, N9</td><td>3</td></tr>
+        <tr><td>No concurrency test on the NBD reply mutex</td><td>F3 residual</td><td>3</td></tr>
+        <tr><td>No trailing-byte / decode-symmetry test</td><td>F9</td><td>4</td></tr>
+        <tr><td>No <span class="font-mono">static_assert(!is_copy_constructible&lt;Framework&gt;)</span></td><td>F11</td><td>4</td></tr>
+        <tr><td>No E2E <span class="font-mono">fio --verify</span> under <span class="font-mono">tc netem</span> loss</td><td>F4 end to end, N1 under load</td><td>1, then CI</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. CHECKLIST                                                 -->
+<!-- ============================================================ -->
+<section id="checklist" class="mt-16 scroll-mt-6">
+  <h2 class="text-3xl font-bold">6. Action checklist</h2>
+  <p class="mt-2 max-w-3xl opacity-80">If you read nothing else. Work top to bottom. Each line is one branch and one PR.</p>
+  <ol class="mt-4 space-y-2">
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-error mt-0.5">1</span><div><p class="font-semibold">Commit the working tree.</p><p class="text-sm opacity-80">README, the RAID10 wording fixes in <span class="font-mono">MasterNBDMain.cpp</span> and the demo script, and the framework demo tweaks. Feature branch, since <span class="font-mono">main</span> is protected.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-error mt-0.5">2</span><div><p class="font-semibold">N1: registration barrier in <span class="font-mono">MasterWriteCommand</span> / <span class="font-mono">MasterReadCommand</span> + synchronous-callback test.</p><p class="text-sm opacity-80">Register all child ids under the lock, then loop the sends. Same-day change.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-error mt-0.5">3</span><div><p class="font-semibold">F7: <span class="font-mono">framework-tests</span> target wired into <span class="font-mono">test</span> and <span class="font-mono">all</span>.</p><p class="text-sm opacity-80">Plus a completeness guard so a new <span class="font-mono">*Test.cpp</span> cannot be forgotten.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-error mt-0.5">4</span><div><p class="font-semibold">F4: <span class="font-mono">RangeSequencer</span> in <span class="font-mono">MasterRuntime</span>, epoch field in <span class="font-mono">MessageHeaderV1</span>, minion drops stale epoch.</p><p class="text-sm opacity-80">Then an E2E <span class="font-mono">fio --verify=crc32c</span> under <span class="font-mono">tc netem loss</span> as the acceptance test.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-warning mt-0.5">5</span><div><p class="font-semibold">N2: heartbeat scheduler, <span class="font-mono">SetNodeActive(false)</span> on timeout, out-of-sync-aware target selection.</p><p class="text-sm opacity-80">This is the demo-visible feature: kill a minion, the drive keeps working, the log says DEGRADED.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-warning mt-0.5">6</span><div><p class="font-semibold">Shutdown cluster: F12 write-only handler, N14 cancel handle, then N3, N6, N7, N8, N9 in one teardown-ordering PR.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-info mt-0.5">7</span><div><p class="font-semibold">Deepen: C (runtime-bound commands), D (placement plan), B (<span class="font-mono">DecodeExact</span>), N5 source check, F11/N16 RAII, untrack <span class="font-mono">compile_commands.json</span>.</p></div></li>
+    <li class="flex items-start gap-3 rounded-box bg-base-200/50 p-3"><span class="badge badge-success mt-0.5">8</span><div><p class="font-semibold">Resume the roadmap: M15 persistent metadata, M17 resync, M18 rebalance + CLI, M19 demo.</p></div></li>
+  </ol>
+</section>
+
+<footer class="mt-16 border-t border-base-content/10 pt-6 text-xs opacity-60">
+  Generated 2026-09-08 from the repository docs and a line-by-line re-check of the cited code at HEAD 13689e3 plus the uncommitted working tree. Severity grades follow the July review's legend. Estimates are indicative only.
+</footer>
+</main>
+
+<!-- ============================================================ -->
+<!-- CODE RENDERING via @pierre/diffs                             -->
+<!-- ============================================================ -->
+<script type="module">
+  const theme = { light: "github-light", dark: "github-dark" };
+  const base = { theme, themeType: "dark", overflow: "wrap" };
+
+  const N1_CURRENT = `for (std::size_t i = 0; i < operations.size(); ++i)
+{
+    IMinionProxy* const proxy = operations[i].proxy;
+    const UUID child_request_id = child_request_ids[i];
+    MasterRuntime::ResendAction resend_action = [proxy, ...]()
+    {
+        proxy->SendWriteRequest(local_offset, payload, child_request_id);
+    };
+
+    runtime.RegisterChildRequest(request_id, child_request_id,
+                                 wire::MessageType::WRITE_RESP,
+                                 0, 0, resend_action);
+    resend_action();   // UDP send NOW; a reply can arrive
+                       // before iteration i+1 registers
+}
+
+runtime.CompleteRequestIfReady(request_id);
+return MakeRetryParams(runtime, request_id);
+
+// MasterRuntime::CompleteRequestIfReady, the predicate:
+if (!iter->second.failed && !iter->second.child_request_ids.empty())
+{
+    return;   // "child set empty" is the only readiness check
+}
+`;
+
+  const N1_FIXED = `// Register the whole child set first. Nothing can complete
+// the parent until every child id is in the set.
+std::vector<MasterRuntime::ResendAction> sends;
+sends.reserve(operations.size());
+for (std::size_t i = 0; i < operations.size(); ++i)
+{
+    IMinionProxy* const proxy = operations[i].proxy;
+    const UUID child_request_id = child_request_ids[i];
+    MasterRuntime::ResendAction resend_action = [proxy, ...]()
+    {
+        proxy->SendWriteRequest(local_offset, payload, child_request_id);
+    };
+
+    runtime.RegisterChildRequest(request_id, child_request_id,
+                                 wire::MessageType::WRITE_RESP,
+                                 0, 0, resend_action);
+    sends.push_back(std::move(resend_action));
+}
+
+// Only now is a reply allowed to drive completion.
+for (MasterRuntime::ResendAction& send : sends)
+{
+    send();
+}
+
+return MakeRetryParams(runtime, request_id);
+`;
+
+  const A_BEFORE = `std::unique_ptr<ICommand::PostTaskParams>
+MasterWriteCommand::Execute(SharedPtr<ITask> task)
+{
+    // ... resolve placements ...
+    DispatchChildren(runtime, request_id, operations);
+    return MakeRetryParams(runtime, request_id);
+}
+
+// Nothing here knows that another request may be
+// in flight for the same logical range.
+`;
+
+  const A_AFTER = `std::unique_ptr<ICommand::PostTaskParams>
+MasterWriteCommand::Execute(SharedPtr<ITask> task)
+{
+    // ... resolve placements ...
+    const Range range{write.logical_offset, write.length};
+    runtime.GetSequencer().Submit(range, Access::EXCLUSIVE,
+        [&runtime, request_id, operations]()
+        {
+            DispatchChildren(runtime, request_id, operations);
+        });
+    // Submit runs the lambda now if the range is free,
+    // else parks it FIFO behind the conflicting request.
+    return MakeRetryParams(runtime, request_id);
+}
+
+// MasterRuntime::CompleteRequest(...) calls
+//   m_sequencer.Release(range);
+// which dispatches the next parked waiter.
+`;
+
+  const C_BEFORE = `// framework/include/Framework.hpp
+using CommandCreator = ICommand* (*)();
+
+// concrete/master/src/MasterCommands.cpp
+ICommand* CreateWriteCommand() { return new MasterWriteCommand(); }
+
+std::unique_ptr<ICommand::PostTaskParams>
+MasterWriteCommand::Execute(SharedPtr<ITask> task)
+{
+    MasterRuntime& runtime = GetActiveMasterRuntime(); // global
+    // ...
+}
+
+// concrete/master/app/MasterNBDMain.cpp
+SetActiveMasterRuntime(runtime);
+framework.Run();
+ClearActiveMasterRuntime();   // pool still running (F8)
+`;
+
+  const C_AFTER = `// framework/include/Framework.hpp
+using CommandCreator = std::function<std::unique_ptr<ICommand>()>;
+
+// concrete/master/src/MasterCommands.cpp
+class MasterWriteCommand : public ICommand
+{
+public:
+    explicit MasterWriteCommand(MasterRuntime& runtime)
+        : m_runtime(runtime) {}
+    std::unique_ptr<PostTaskParams> Execute(SharedPtr<ITask>) override;
+private:
+    MasterRuntime& m_runtime;   // dependency is visible
+};
+
+CommandMap BuildMasterCommandMap(MasterRuntime& runtime)
+{
+    return {
+        { Key(wire::MessageType::WRITE_REQ),
+          [&runtime]{ return std::make_unique<MasterWriteCommand>(runtime); } },
+        // ...
+    };
+}
+
+// No SetActive / ClearActive / g_activeRuntime.
+// Two runtimes per process, and unit tests construct commands directly.
+`;
+
+  const SIG_BEFORE = `void RequestFrameworkStop()
+{
+    FrameworkRuntimeState& state =
+        *Handleton<FrameworkRuntimeState>::GetInstance(); // may allocate
+    std::lock_guard<std::mutex> lock(state.m_mutex);      // may self-deadlock
+    if (state.m_activeFramework)
+    {
+        state.m_activeFramework->m_stopRequested = true;  // plain bool: UB
+        state.m_activeFramework->Stop();
+    }
+}
+
+void OnSignal(int) { ilrd::RequestFrameworkStop(); }
+`;
+
+  const SIG_AFTER = `// Published once by Framework::Run(), read lock-free by the handler.
+static std::atomic<int> g_stopFd{-1};
+
+void RequestFrameworkStop()
+{
+    const int fd = g_stopFd.load(std::memory_order_acquire);
+    if (fd >= 0)
+    {
+        const char byte = 1;
+        (void)write(fd, &byte, 1);   // async-signal-safe
+    }
+}
+
+// Reactor already watches m_stopPipe[0]; readability IS the stop
+// request, so m_stopRequested is deleted.
+void OnSignal(int) { ilrd::RequestFrameworkStop(); }
+// Installed with sigaction(SA_RESTART), or replaced by a signalfd
+// registered in the Reactor.
+`;
+
+  const B_BEFORE = `// MinionResponseProxy::DecodeResponse
+wire::MessageV1 message;
+Buffer buffer = MakeBuffer(datagram);
+Deserialize(buffer, message);   // no full-consumption check
+return message;                 // trailing bytes silently accepted
+
+// MinionProxy::ReceiveResponse: same shape.
+// minion MasterProxy::DecodeMessage: enforces exact size. Asymmetric.
+`;
+
+  const B_AFTER = `// concrete/common/include/wire/Decode.hpp
+struct DecodeResult
+{
+    std::optional<wire::MessageV1> message;
+    DropReason reason;   // TOO_SHORT, BAD_MAGIC, BAD_VERSION,
+                         // LENGTH_MISMATCH, TRAILING_BYTES, WRONG_DIRECTION
+};
+DecodeResult DecodeExact(std::span<const std::uint8_t> bytes,
+                         wire::Direction expected);
+
+// All three call sites:
+const DecodeResult decoded = wire::DecodeExact(datagram, Direction::RESPONSE);
+if (!decoded.message) { LogDrop(decoded.reason); return nullptr; }
+`;
+
+  function fallback(id, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pre = document.createElement("pre");
+    pre.className = "fallback";
+    pre.textContent = text;
+    el.replaceChildren(pre);
+  }
+
+  try {
+    const { File, FileDiff } = await import("https://esm.sh/@pierre/diffs@1.2.10?bundle");
+    new File(base).render({
+      containerWrapper: document.querySelector("#diff-n1-current"),
+      file: { name: "concrete/master/src/MasterCommands.cpp", contents: N1_CURRENT },
+    });
+    new FileDiff({ ...base, diffStyle: "split" }).render({
+      containerWrapper: document.querySelector("#diff-n1-fix"),
+      oldFile: { name: "concrete/master/src/MasterCommands.cpp", contents: N1_CURRENT.split("\n// MasterRuntime")[0] },
+      newFile: { name: "concrete/master/src/MasterCommands.cpp", contents: N1_FIXED },
+    });
+    new FileDiff({ ...base, diffStyle: "split" }).render({
+      containerWrapper: document.querySelector("#diff-a"),
+      oldFile: { name: "concrete/master/src/MasterCommands.cpp", contents: A_BEFORE },
+      newFile: { name: "concrete/master/src/MasterCommands.cpp", contents: A_AFTER },
+    });
+    new FileDiff({ ...base, diffStyle: "split" }).render({
+      containerWrapper: document.querySelector("#diff-c"),
+      oldFile: { name: "concrete/master/src/MasterCommands.cpp", contents: C_BEFORE },
+      newFile: { name: "concrete/master/src/MasterCommands.cpp", contents: C_AFTER },
+    });
+    new FileDiff({ ...base, diffStyle: "split" }).render({
+      containerWrapper: document.querySelector("#diff-sig"),
+      oldFile: { name: "framework/src/Framework.cpp", contents: SIG_BEFORE },
+      newFile: { name: "framework/src/Framework.cpp", contents: SIG_AFTER },
+    });
+    new FileDiff({ ...base, diffStyle: "split" }).render({
+      containerWrapper: document.querySelector("#diff-b"),
+      oldFile: { name: "concrete/master/src/MinionResponseProxy.cpp", contents: B_BEFORE },
+      newFile: { name: "concrete/common/include/wire/Decode.hpp", contents: B_AFTER },
+    });
+  } catch (error) {
+    console.warn("@pierre/diffs unavailable, using plain fallback", error);
+    fallback("diff-n1-current", N1_CURRENT);
+    fallback("diff-n1-fix", "BEFORE\n" + N1_CURRENT.split("\n// MasterRuntime")[0] + "\nAFTER\n" + N1_FIXED);
+    fallback("diff-a", "BEFORE\n" + A_BEFORE + "\nAFTER\n" + A_AFTER);
+    fallback("diff-c", "BEFORE\n" + C_BEFORE + "\nAFTER\n" + C_AFTER);
+    fallback("diff-sig", "BEFORE\n" + SIG_BEFORE + "\nAFTER\n" + SIG_AFTER);
+    fallback("diff-b", "BEFORE\n" + B_BEFORE + "\nAFTER\n" + B_AFTER);
+  }
+</script>
+</body>
+</html>

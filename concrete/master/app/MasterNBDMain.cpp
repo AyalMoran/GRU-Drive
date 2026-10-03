@@ -115,7 +115,7 @@ void PrintUsage(const char* program_name)
            " [--block-size <n>] [--plugins-dir <dir>]"
         << std::endl
         << "One minion starts single-node mode. Two or more minions use the "
-           "hybrid RAID0+1 ring."
+           "distributed RAID10 ring."
         << std::endl;
 }
 

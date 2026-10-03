@@ -1,0 +1,26 @@
+# Session Handoff
+
+**Branch**: main
+**When**: 2026-09-07 17:36:44 UTC
+**Session**: e752a4e5-225c-4816-9cbd-8a1e69e8ddfe
+
+## Summary
+Here's a cleaner, more structured version of your prompt:
+
+---
+
+Read through our architecture review, roadmap, next steps, and the list of known bugs and issues.
+
+Then use the lavish skill to produce a single, cohesive HTML report that makes all of it easy to understand at a glance. The report should:
+
+1. **Summarize the architecture review** - the key findings, strengths, and weak points of the current design, with diagrams of the components and data flow.
+2. **Catalog the known bugs and issues** - each with a short explanation of what goes wrong, a concrete example or repro scenario, and its severity/impact.
+3. **Lay out the roadmap and next steps** - what should be done, in what order, and why, visualized as a timeline or prioritized list.
+4.
+
+## Modified Files
+- README.md
+- concrete/master/app/MasterNBDMain.cpp
+- framework/test/FrameworkDemo.cpp
+- framework/test/plugins/FrameworkPrintCommandV2.cpp
+- scripts/run_single_machine_nbd.sh

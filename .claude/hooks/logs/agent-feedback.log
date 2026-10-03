@@ -1,0 +1,88 @@
+[2026-07-02T14:07:58.411Z] [feedback-loop] Processing feedback for agent: Explore (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:08:22.414Z] [feedback-loop] Processing feedback for agent: Explore (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:08:30.914Z] [feedback-loop] Processing feedback for agent: Explore (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:08:43.182Z] [feedback-loop] Processing feedback for agent: Explore (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:12:53.036Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:12:53.036Z] [feedback-loop] Skipping unknown agent type
+[2026-07-02T14:30:06.943Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:30:51.299Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:03.467Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:19.744Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:33.541Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:34.880Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:37.588Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:31:41.014Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:32:04.253Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:32:07.725Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:32:26.973Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:32:30.747Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T14:32:37.463Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:16:16.661Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:23:14.780Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:29:37.506Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:31:49.381Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:33:18.957Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:34:18.949Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:35:38.722Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-02T22:36:09.333Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-03T10:02:41.474Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-03T10:02:41.474Z] [feedback-loop] Skipping unknown agent type
+[2026-07-03T18:35:26.792Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-03T18:35:26.793Z] [feedback-loop] Skipping unknown agent type
+[2026-07-03T19:48:11.396Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-03T19:48:11.396Z] [feedback-loop] Skipping unknown agent type
+[2026-07-03T20:29:17.991Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-03T20:29:17.992Z] [feedback-loop] Skipping unknown agent type
+[2026-07-05T06:21:29.244Z] [feedback-loop] Processing feedback for agent: unknown (session: 6a36cfed-9dd1-4067-a802-4815c0c6a87d)
+[2026-07-05T06:21:29.244Z] [feedback-loop] Skipping unknown agent type
+[2026-07-05T06:23:56.009Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: 6a36cfed-9dd1-4067-a802-4815c0c6a87d)
+[2026-07-05T06:24:05.839Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: 6a36cfed-9dd1-4067-a802-4815c0c6a87d)
+[2026-07-05T06:24:06.686Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: 6a36cfed-9dd1-4067-a802-4815c0c6a87d)
+[2026-07-05T06:26:23.852Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-05T06:26:23.852Z] [feedback-loop] Skipping unknown agent type
+[2026-07-05T06:26:44.535Z] [feedback-loop] Processing feedback for agent: workflow-subagent (session: 6a36cfed-9dd1-4067-a802-4815c0c6a87d)
+[2026-07-05T06:36:12.424Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-05T06:36:12.424Z] [feedback-loop] Skipping unknown agent type
+[2026-07-05T06:45:06.442Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-05T06:45:06.442Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T05:45:48.774Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T05:45:48.775Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T05:52:18.084Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T05:52:18.085Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T05:54:21.980Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T05:54:21.981Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T05:57:37.902Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T05:57:37.903Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T05:59:48.795Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T05:59:48.796Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:02:05.487Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:02:05.487Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:04:42.144Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:04:42.144Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:06:50.438Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:06:50.439Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:12:28.823Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:12:28.824Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:15:04.378Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:15:04.378Z] [feedback-loop] Skipping unknown agent type
+[2026-07-06T06:25:26.794Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-06T06:25:26.794Z] [feedback-loop] Skipping unknown agent type
+[2026-07-09T09:26:00.090Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-09T09:26:00.091Z] [feedback-loop] Skipping unknown agent type
+[2026-07-09T09:38:54.753Z] [feedback-loop] Processing feedback for agent: unknown (session: d92cff6d-4099-4911-8f04-60df12fb3154)
+[2026-07-09T09:38:54.753Z] [feedback-loop] Skipping unknown agent type
+[2026-08-19T10:54:30.221Z] [feedback-loop] Processing feedback for agent: unknown (session: 38fc1262-7c2d-44b9-872d-aca4f58a2885)
+[2026-08-19T10:54:30.222Z] [feedback-loop] Skipping unknown agent type
+[2026-08-29T21:52:30.889Z] [feedback-loop] Processing feedback for agent: general-purpose (session: 3cac20b3-8b40-4027-b713-d310174b39b5)
+[2026-08-29T21:52:30.894Z] [feedback-loop] Decision DEC-20260829-9a304d81 logged for agent general-purpose
+[2026-08-29T21:52:30.894Z] [feedback-loop] No downstream agents for general-purpose (terminal agent)
+[2026-08-29T21:52:30.894Z] [feedback-loop] === AGENT FEEDBACK LOOP ===
+Agent: general-purpose
+Category: general
+Decision ID: DEC-20260829-9a304d81
+Task ID: none
+Timestamp: 2026-08-29T21:52:30.889Z
+Status: completed
+Downstream: none
+
+Summary: 

@@ -25,26 +25,26 @@ namespace
 class PrintCommand : public ilrd::ICommand
 {
   public:
-    std::unique_ptr<WaitForResponseParams>
+    std::unique_ptr<PostTaskParams>
     Execute(ilrd::SharedPtr<ilrd::ITask> task) override
     {
         ilrd::demo::DemoTask& demo_task =
             dynamic_cast<ilrd::demo::DemoTask&>(*task);
         std::cout << "PrintCommand: " << demo_task.GetPayload() << std::endl;
-        return std::unique_ptr<WaitForResponseParams>();
+        return std::unique_ptr<PostTaskParams>();
     }
 };
 
 class QuitCommand : public ilrd::ICommand
 {
   public:
-    std::unique_ptr<WaitForResponseParams>
+    std::unique_ptr<PostTaskParams>
     Execute(ilrd::SharedPtr<ilrd::ITask> task) override
     {
         (void)task;
         std::cout << "QuitCommand: Bye" << std::endl;
         ilrd::RequestFrameworkStop();
-        return std::unique_ptr<WaitForResponseParams>();
+        return std::unique_ptr<PostTaskParams>();
     }
 };
 

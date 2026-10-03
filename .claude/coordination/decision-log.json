@@ -1,0 +1,22 @@
+{
+  "schema_version": "2.0.0",
+  "log_created_at": "2026-08-29T21:52:30.889Z",
+  "decisions": [
+    {
+      "decision_id": "DEC-20260829-9a304d81",
+      "timestamp": "2026-08-29T21:52:30.889Z",
+      "made_by": {
+        "instance_id": "moranayal-ASUS-Vivobook-S-15-M5506WA-M5506WA-459565",
+        "agent_type": "general-purpose"
+      },
+      "category": "general",
+      "title": "Agent general-purpose completed",
+      "description": "",
+      "impact": {
+        "scope": "agent-pipeline",
+        "downstream_agents": []
+      },
+      "status": "completed"
+    }
+  ]
+}

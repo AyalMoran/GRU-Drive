@@ -1,0 +1,18 @@
+{
+  "sessionId": "gru-drive-main-0907-2036-e9c3",
+  "totalTokensInjected": 336,
+  "byCategory": {
+    "prompt": 336
+  },
+  "byHook": {
+    "prompt-dispatcher": 336
+  },
+  "records": [
+    {
+      "hookName": "prompt-dispatcher",
+      "category": "prompt",
+      "tokens": 336,
+      "timestamp": "2026-09-08T00:59:08.070Z"
+    }
+  ]
+}

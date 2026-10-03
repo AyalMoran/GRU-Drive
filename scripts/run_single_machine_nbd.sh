@@ -21,7 +21,7 @@ Starts a local ring of minions and one master NBD runtime. Run scripts/setup_nbd
 first. Filesystem formatting and mounting are intentionally left as explicit
 operator commands; see docs/current/nbd-step13-demo.md.
 
-One minion starts single-node mode. Two or more minions use the hybrid RAID0+1 ring.
+One minion starts single-node mode. Two or more minions use the distributed RAID10 ring.
 
 The minion runs unprivileged. The master NBD process is started with sudo when
 this script is not already root because Linux NBD ioctls require privileges.
